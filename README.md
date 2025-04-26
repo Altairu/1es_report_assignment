@@ -1,6 +1,16 @@
 # 1es_report_assignment
 1esレポート
 
+章を追加するときは 'main.tex'の以下画像部分につけ足す
+
+![alt text](image.png)
+
+また，
+作ったtexファイル（例：part30.tex）の先頭に以下をかならず含めること
+```
+% !TEX root = main.tex
+```
+
 以下Vscode設定
 ```json
 {
