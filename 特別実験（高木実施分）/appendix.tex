@@ -1,0 +1,1452 @@
+% !TEX root = main.tex
+%////////////////////////////////////////////////////////
+\begin{center}
+    \section*{\kintou{2.5zw}{付録}}                      %% ここに番号をつけない
+    \vspace*{-2zh}
+\end{center}
+\addcontentsline{toc}{section}{付録} %% 目次に番号をつけない
+\input{appendix.sty}
+%////////////////////////////////////////////////////////
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{下位レイヤープログラム}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+作成したプログラムを以下に示す．
+また，\url{https://github.com/Altairu/2_wheel_PID_control-_CubeIED}に掲載している．
+
+\subsubsection{メインプログラム}
+
+\begin{lstlisting}[language=C, caption=メインコード(main.c)]
+    #include "main.h"
+    #include "motor_driver.h"
+    #include "encoder.h"
+    #include "serial_lib.h"
+    
+    TIM_HandleTypeDef htim1;
+    TIM_HandleTypeDef htim12;
+    TIM_HandleTypeDef htim4;
+    TIM_HandleTypeDef htim8;
+    UART_HandleTypeDef huart2;
+    
+    MotorDriver motorRight, motorLeft;
+    Encoder encoderRight, encoderLeft;
+    EncoderData encoderDataRight, encoderDataLeft;
+    
+    #define WHEEL_DIAMETER_MM 365 //129.5
+    #define ENCODER_PULSES_PER_REV 4096
+    
+    int16_t controlSignalRight = 0;
+    int16_t controlSignalLeft = 0;
+    
+    void SystemClock_Config(void);
+    static void MX_GPIO_Init(void);
+    static void MX_USART2_UART_Init(void);
+    static void MX_TIM1_Init(void);
+    static void MX_TIM12_Init(void);
+    static void MX_TIM4_Init(void);
+    static void MX_TIM8_Init(void);
+    
+    int main(void)
+    {
+        HAL_Init();
+        SystemClock_Config();
+        MX_GPIO_Init();
+        MX_USART2_UART_Init();
+        MX_TIM1_Init();
+        MX_TIM12_Init();
+        MX_TIM4_Init();
+        MX_TIM8_Init();
+    
+        Serial_Init(&huart2);
+        MotorDriver_Init(&motorRight, &htim12, TIM_CHANNEL_1, &htim12, TIM_CHANNEL_2);
+        MotorDriver_Init(&motorLeft, &htim1, TIM_CHANNEL_4, &htim1, TIM_CHANNEL_1);
+        Encoder_Init(&encoderRight, &htim8, WHEEL_DIAMETER_MM, ENCODER_PULSES_PER_REV, 10);
+        Encoder_Init(&encoderLeft, &htim4, WHEEL_DIAMETER_MM, ENCODER_PULSES_PER_REV, 10);
+    
+        uint32_t lastSendTime = HAL_GetTick();
+    
+        while (1)
+        {
+            /* PCからの制御信号を受信 */
+            int16_t receivedData[2];
+            if (Serial_ReceiveData(&huart2, receivedData, 2))
+            {
+                controlSignalRight = receivedData[0];
+                controlSignalLeft = receivedData[1];
+    
+                MotorDriver_setSpeed(&motorRight, -1* controlSignalRight);
+                MotorDriver_setSpeed(&motorLeft,   controlSignalLeft);
+            }
+    
+            /* エンコーダーデータの送信（10msごとに送信） */
+            if (HAL_GetTick() - lastSendTime >= 10)
+            {
+                lastSendTime = HAL_GetTick();
+    
+                /* エンコーダーの速度データを更新 */
+                Encoder_Interrupt(&encoderRight, &encoderDataRight);
+                Encoder_Interrupt(&encoderLeft, &encoderDataLeft);
+    
+                /* エンコーダー速度を送信 */
+                int16_t feedbackData[2] = {(int16_t)encoderDataRight.velocity, -1*(int16_t)encoderDataLeft.velocity};
+                Serial_SendData(&huart2, feedbackData, 2);
+            }
+        }
+    }
+    
+    
+    /**
+      * @brief System Clock Configuration
+      * @retval None
+      */
+    void SystemClock_Config(void)
+    {
+      RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+      RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    
+      /** Configure the main internal regulator output voltage
+      */
+      __HAL_RCC_PWR_CLK_ENABLE();
+      __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+    
+      /** Initializes the RCC Oscillators according to the specified parameters
+      * in the RCC_OscInitTypeDef structure.
+      */
+      RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+      RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+      RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+      RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+      RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+      RCC_OscInitStruct.PLL.PLLM = 16;
+      RCC_OscInitStruct.PLL.PLLN = 336;
+      RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+      RCC_OscInitStruct.PLL.PLLQ = 2;
+      RCC_OscInitStruct.PLL.PLLR = 2;
+      if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+      {
+        Error_Handler();
+      }
+    
+      /** Initializes the CPU, AHB and APB buses clocks
+      */
+      RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                                  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+      RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+      RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+      RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+      RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    
+      if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+      {
+        Error_Handler();
+      }
+    }
+    
+    /**
+      * @brief TIM1 Initialization Function
+      * @param None
+      * @retval None
+      */
+    static void MX_TIM1_Init(void)
+    {
+    
+      /* USER CODE BEGIN TIM1_Init 0 */
+    
+      /* USER CODE END TIM1_Init 0 */
+    
+      TIM_MasterConfigTypeDef sMasterConfig = {0};
+      TIM_OC_InitTypeDef sConfigOC = {0};
+      TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+    
+      /* USER CODE BEGIN TIM1_Init 1 */
+    
+      /* USER CODE END TIM1_Init 1 */
+      htim1.Instance = TIM1;
+      htim1.Init.Prescaler = 0;
+      htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+      htim1.Init.Period = 65535;
+      htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+      htim1.Init.RepetitionCounter = 0;
+      htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+      if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+      sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+      if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      sConfigOC.OCMode = TIM_OCMODE_PWM1;
+      sConfigOC.Pulse = 0;
+      sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+      sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+      sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+      sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+      sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+      if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+      sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+      sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+      sBreakDeadTimeConfig.DeadTime = 0;
+      sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+      sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+      sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+      if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      /* USER CODE BEGIN TIM1_Init 2 */
+    
+      /* USER CODE END TIM1_Init 2 */
+      HAL_TIM_MspPostInit(&htim1);
+    
+    }
+    
+    /**
+      * @brief TIM4 Initialization Function
+      * @param None
+      * @retval None
+      */
+    static void MX_TIM4_Init(void)
+    {
+    
+      /* USER CODE BEGIN TIM4_Init 0 */
+    
+      /* USER CODE END TIM4_Init 0 */
+    
+      TIM_Encoder_InitTypeDef sConfig = {0};
+      TIM_MasterConfigTypeDef sMasterConfig = {0};
+    
+      /* USER CODE BEGIN TIM4_Init 1 */
+    
+      /* USER CODE END TIM4_Init 1 */
+      htim4.Instance = TIM4;
+      htim4.Init.Prescaler = 0;
+      htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+      htim4.Init.Period = 65535;
+      htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+      htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+      sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+      sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+      sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+      sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+      sConfig.IC1Filter = 0;
+      sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+      sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+      sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+      sConfig.IC2Filter = 0;
+      if (HAL_TIM_Encoder_Init(&htim4, &sConfig) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+      sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+      if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      /* USER CODE BEGIN TIM4_Init 2 */
+    
+      /* USER CODE END TIM4_Init 2 */
+    
+    }
+    
+    /**
+      * @brief TIM8 Initialization Function
+      * @param None
+      * @retval None
+      */
+    static void MX_TIM8_Init(void)
+    {
+    
+      /* USER CODE BEGIN TIM8_Init 0 */
+    
+      /* USER CODE END TIM8_Init 0 */
+    
+      TIM_Encoder_InitTypeDef sConfig = {0};
+      TIM_MasterConfigTypeDef sMasterConfig = {0};
+    
+      /* USER CODE BEGIN TIM8_Init 1 */
+    
+      /* USER CODE END TIM8_Init 1 */
+      htim8.Instance = TIM8;
+      htim8.Init.Prescaler = 0;
+      htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
+      htim8.Init.Period = 65535;
+      htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+      htim8.Init.RepetitionCounter = 0;
+      htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+      sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+      sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+      sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+      sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+      sConfig.IC1Filter = 0;
+      sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+      sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+      sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+      sConfig.IC2Filter = 0;
+      if (HAL_TIM_Encoder_Init(&htim8, &sConfig) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+      sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+      if (HAL_TIMEx_MasterConfigSynchronization(&htim8, &sMasterConfig) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      /* USER CODE BEGIN TIM8_Init 2 */
+    
+      /* USER CODE END TIM8_Init 2 */
+    
+    }
+    
+    /**
+      * @brief TIM12 Initialization Function
+      * @param None
+      * @retval None
+      */
+    static void MX_TIM12_Init(void)
+    {
+    
+      /* USER CODE BEGIN TIM12_Init 0 */
+    
+      /* USER CODE END TIM12_Init 0 */
+    
+      TIM_OC_InitTypeDef sConfigOC = {0};
+    
+      /* USER CODE BEGIN TIM12_Init 1 */
+    
+      /* USER CODE END TIM12_Init 1 */
+      htim12.Instance = TIM12;
+      htim12.Init.Prescaler = 0;
+      htim12.Init.CounterMode = TIM_COUNTERMODE_UP;
+      htim12.Init.Period = 65535;
+      htim12.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+      htim12.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+      if (HAL_TIM_PWM_Init(&htim12) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      sConfigOC.OCMode = TIM_OCMODE_PWM1;
+      sConfigOC.Pulse = 0;
+      sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+      sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+      if (HAL_TIM_PWM_ConfigChannel(&htim12, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      if (HAL_TIM_PWM_ConfigChannel(&htim12, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      /* USER CODE BEGIN TIM12_Init 2 */
+    
+      /* USER CODE END TIM12_Init 2 */
+      HAL_TIM_MspPostInit(&htim12);
+    
+    }
+    
+    /**
+      * @brief USART2 Initialization Function
+      * @param None
+      * @retval None
+      */
+    static void MX_USART2_UART_Init(void)
+    {
+    
+      /* USER CODE BEGIN USART2_Init 0 */
+    
+      /* USER CODE END USART2_Init 0 */
+    
+      /* USER CODE BEGIN USART2_Init 1 */
+    
+      /* USER CODE END USART2_Init 1 */
+      huart2.Instance = USART2;
+      huart2.Init.BaudRate = 115200;
+      huart2.Init.WordLength = UART_WORDLENGTH_8B;
+      huart2.Init.StopBits = UART_STOPBITS_1;
+      huart2.Init.Parity = UART_PARITY_NONE;
+      huart2.Init.Mode = UART_MODE_TX_RX;
+      huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+      huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+      if (HAL_UART_Init(&huart2) != HAL_OK)
+      {
+        Error_Handler();
+      }
+      /* USER CODE BEGIN USART2_Init 2 */
+    
+      /* USER CODE END USART2_Init 2 */
+    
+    }
+    
+    /**
+      * @brief GPIO Initialization Function
+      * @param None
+      * @retval None
+      */
+    static void MX_GPIO_Init(void)
+    {
+      GPIO_InitTypeDef GPIO_InitStruct = {0};
+    /* USER CODE BEGIN MX_GPIO_Init_1 */
+    /* USER CODE END MX_GPIO_Init_1 */
+    
+      /* GPIO Ports Clock Enable */
+      __HAL_RCC_GPIOC_CLK_ENABLE();
+      __HAL_RCC_GPIOH_CLK_ENABLE();
+      __HAL_RCC_GPIOA_CLK_ENABLE();
+      __HAL_RCC_GPIOB_CLK_ENABLE();
+    
+      /*Configure GPIO pin Output Level */
+      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+    
+      /*Configure GPIO pin : B1_Pin */
+      GPIO_InitStruct.Pin = B1_Pin;
+      GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+      GPIO_InitStruct.Pull = GPIO_NOPULL;
+      HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+    
+      /*Configure GPIO pin : LED_Pin */
+      GPIO_InitStruct.Pin = LED_Pin;
+      GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+      GPIO_InitStruct.Pull = GPIO_NOPULL;
+      GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+      HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
+    
+    /* USER CODE BEGIN MX_GPIO_Init_2 */
+    /* USER CODE END MX_GPIO_Init_2 */
+    }
+    
+    /* USER CODE BEGIN 4 */
+    
+    /* USER CODE END 4 */
+    
+    /**
+      * @brief  This function is executed in case of error occurrence.
+      * @retval None
+      */
+    void Error_Handler(void)
+    {
+      /* USER CODE BEGIN Error_Handler_Debug */
+      /* User can add his own implementation to report the HAL error return state */
+      __disable_irq();
+      while (1)
+      {
+      }
+      /* USER CODE END Error_Handler_Debug */
+    }
+    
+    #ifdef  USE_FULL_ASSERT
+    /**
+      * @brief  Reports the name of the source file and the source line number
+      *         where the assert_param error has occurred.
+      * @param  file: pointer to the source file name
+      * @param  line: assert_param error line source number
+      * @retval None
+      */
+    void assert_failed(uint8_t *file, uint32_t line)
+    {
+      /* USER CODE BEGIN 6 */
+      /* User can add his own implementation to report the file name and line number,
+         ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+      /* USER CODE END 6 */
+    }
+    #endif /* USE_FULL_ASSERT */
+
+\end{lstlisting}
+
+\subsubsection{エンコーダーライブラリ}
+
+\begin{lstlisting}[language=C, caption=エンコーダーライブラリ(encoder.h)]
+    // kinematics.h
+
+    #ifndef KINEMATICS_H
+    #define KINEMATICS_H
+    
+    typedef enum {
+        OMNI_3,
+        OMNI_4,
+        MEKANUM
+    } WheelMode;
+    
+    typedef struct {
+        float robot_diameter;   // ロボットの直径
+        float wheel_radius;     // ホイールの半径
+        WheelMode mode;         // 動作モード
+    } Kinematics;
+    
+    // 初期化関数
+    void Kinematics_Init(Kinematics *kinematics, float robot_diameter, float wheel_radius, WheelMode mode);
+    
+    // モーターの目標速度を計算する関数
+    void Kinematics_GetTargetSpeeds(Kinematics *kinematics, float lx, float ly, float rx, float *speedFR, float *speedFL, float *speedBR, float *speedBL);
+    
+    #endif // KINEMATICS_H
+\end{lstlisting}
+
+\begin{lstlisting}[language=C, caption=エンコーダーライブラリ(encoder.c)]
+    #include "encoder.h"
+
+    #define TIMER_MAX_COUNT 65535  // タイマーの最大値（ 16 ビットタイマーの場合）
+    
+    void Encoder_Init(Encoder* encoder, TIM_HandleTypeDef* htim, double diameter, int ppr, int period)
+    {
+        encoder->htim = htim;
+        encoder->ppr = ppr;
+        encoder->diameter = diameter;
+        encoder->period = period;
+        encoder->limit = 0;
+        encoder->before_rot = 0.0;
+    
+        encoder->htim->Init.Prescaler = 0;
+        encoder->htim->Init.CounterMode = TIM_COUNTERMODE_UP;
+        encoder->htim->Init.Period = TIMER_MAX_COUNT;
+        encoder->htim->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    
+        TIM_Encoder_InitTypeDef encoder_init;
+        encoder_init.EncoderMode = TIM_ENCODERMODE_TI12;
+        encoder_init.IC1Polarity = TIM_ICPOLARITY_RISING;
+        encoder_init.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+        encoder_init.IC1Prescaler = TIM_ICPSC_DIV1;
+        encoder_init.IC1Filter = 0;
+        encoder_init.IC2Polarity = TIM_ICPOLARITY_RISING;
+        encoder_init.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+        encoder_init.IC2Prescaler = TIM_ICPSC_DIV1;
+        encoder_init.IC2Filter = 0;
+    
+        HAL_TIM_Encoder_Init(htim, &encoder_init);
+        HAL_TIM_Encoder_Start(htim, TIM_CHANNEL_ALL);
+        __HAL_TIM_SET_COUNTER(htim, TIMER_MAX_COUNT / 2);  // カウンタを中央に設定
+    }
+    
+    int Encoder_Read(Encoder* encoder)
+    {
+        int16_t count = (int16_t)(__HAL_TIM_GET_COUNTER(encoder->htim) - TIMER_MAX_COUNT / 2);
+        return count;
+    }
+    
+    void Encoder_Interrupt(Encoder* encoder, EncoderData* encoder_data)
+    {
+        int count = Encoder_Read(encoder);
+    
+        encoder_data->count = count;
+        encoder_data->rot = count / (double)encoder->ppr;
+        encoder_data->deg = encoder_data->rot * 360.0;
+        encoder_data->distance = encoder_data->rot * (PI * encoder->diameter);
+    
+        encoder_data->rps = (encoder_data->rot - encoder->before_rot) / (encoder->period * 0.001);
+        encoder_data->velocity = encoder_data->rps * PI * encoder->diameter;
+    
+        encoder->before_rot = encoder_data->rot;
+    }
+    
+    void Encoder_Reset(Encoder* encoder)
+    {
+        __HAL_TIM_SET_COUNTER(encoder->htim, TIMER_MAX_COUNT / 2);  // カウンタを中央にリセット
+    }
+\end{lstlisting}
+
+\subsubsection{モータドライバーライブラリ}
+
+\begin{lstlisting}[language=C, caption=モータドライバーライブラリ(motor\_driver.h)]
+    #ifndef MOTOR_DRIVER_H
+    #define MOTOR_DRIVER_H
+    
+    #include "stm32f4xx_hal.h"
+    
+    typedef struct {
+        TIM_HandleTypeDef* htimA;  // タイマーA
+        uint32_t channelA;         // タイマーチャンネルA
+        TIM_HandleTypeDef* htimB;  // タイマーB
+        uint32_t channelB;         // タイマーチャンネルB
+    } MotorDriver;
+    
+    // モータードライバを初期化する関数
+    void MotorDriver_Init(MotorDriver* motor, TIM_HandleTypeDef* htimA, uint32_t channelA,
+                          TIM_HandleTypeDef* htimB, uint32_t channelB);
+    
+    // モーターの速度を設定する関数
+    void MotorDriver_setSpeed(MotorDriver* motor, int speed);
+    
+    #endif /* MOTOR_DRIVER_H */
+\end{lstlisting}
+
+\begin{lstlisting}[language=C, caption=モータドライバーライブラリ(motor\_driver.c)]
+    #include "motor_driver.h"
+
+    // 初期化関数
+    void MotorDriver_Init(MotorDriver* motor, TIM_HandleTypeDef* htimA, uint32_t channelA,
+                          TIM_HandleTypeDef* htimB, uint32_t channelB) {
+        motor->htimA = htimA;
+        motor->channelA = channelA;
+        motor->htimB = htimB;
+        motor->channelB = channelB;
+    
+        // PWM 開始
+        HAL_TIM_PWM_Start(htimA, channelA);
+        HAL_TIM_PWM_Start(htimB, channelB);
+    }
+    
+    // 速度設定関数
+    void MotorDriver_setSpeed(MotorDriver *motor, int speed) {
+        int pwm_value;
+        if (speed > 100) speed = 99;
+        if (speed < -100) speed = -99;
+    
+        if (speed > 0) {
+            pwm_value = (speed * __HAL_TIM_GET_AUTORELOAD(motor->htimA)) / 100;
+            __HAL_TIM_SET_COMPARE(motor->htimA, motor->channelA, pwm_value);
+            __HAL_TIM_SET_COMPARE(motor->htimB, motor->channelB, 0);
+        } else {
+            pwm_value = (-speed * __HAL_TIM_GET_AUTORELOAD(motor->htimA)) / 100;
+            __HAL_TIM_SET_COMPARE(motor->htimA, motor->channelA, 0);
+            __HAL_TIM_SET_COMPARE(motor->htimB, motor->channelB, pwm_value);
+        }
+    }
+\end{lstlisting}
+
+\subsubsection{シリアル通信ライブラリ}
+
+\begin{lstlisting}[language=C, caption=シリアル通信ライブラリ(serial\_lib.h)]
+    #ifndef SERIAL_LIB_H
+    #define SERIAL_LIB_H
+    
+    #include "main.h"
+    
+    // シリアルヘッダーの定義
+    #define SERIAL_HEADER1 0xA5
+    #define SERIAL_HEADER2 0xA5
+    
+    // 関数プロトタイプ
+    void Serial_Init(UART_HandleTypeDef *huart);
+    void Serial_SendData(UART_HandleTypeDef *huart, int16_t *data, uint8_t data_count);
+    uint8_t Serial_ReceiveData(UART_HandleTypeDef *huart, int16_t *data, uint8_t data_count);
+    
+    #endif // SERIAL_LIB_H
+\end{lstlisting}
+
+\begin{lstlisting}[language=C, caption=シリアル通信ライブラリ(serial\_lib.c)]
+    #include "serial_lib.h"
+    #include <stdlib.h>
+    
+    // シリアル通信の初期化
+    void Serial_Init(UART_HandleTypeDef *huart) {
+        HAL_UART_Init(huart);
+    }
+    
+    // 可変長データの送信関数
+    void Serial_SendData(UART_HandleTypeDef *huart, int16_t *data, uint8_t data_count) {
+        uint8_t buffer_size = 2 + data_count * 2;
+        uint8_t *buffer = (uint8_t *)malloc(buffer_size);
+    
+        buffer[0] = SERIAL_HEADER1;
+        buffer[1] = SERIAL_HEADER2;
+    
+        for (uint8_t i = 0; i < data_count; i++) {
+            buffer[2 + i * 2] = (data[i] >> 8) & 0xFF;
+            buffer[3 + i * 2] = data[i] & 0xFF;
+        }
+    
+        HAL_UART_Transmit(huart, buffer, buffer_size, HAL_MAX_DELAY);
+        free(buffer);
+    }
+    
+    // 可変長データの受信関数
+    uint8_t Serial_ReceiveData(UART_HandleTypeDef *huart, int16_t *data, uint8_t data_count) {
+        uint8_t buffer_size = 2 + data_count * 2;
+        uint8_t *buffer = (uint8_t *)malloc(buffer_size);
+    
+        if (HAL_UART_Receive(huart, buffer, buffer_size, HAL_MAX_DELAY) == HAL_OK) {
+            if (buffer[0] == SERIAL_HEADER1 && buffer[1] == SERIAL_HEADER2) {
+                for (uint8_t i = 0; i < data_count; i++) {
+                    data[i] = (buffer[2 + i * 2] << 8) | buffer[3 + i * 2];
+                }
+                free(buffer);
+                return 1; // 正常受信
+            }
+        }
+        free(buffer);
+        return 0; // エラー
+    }
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{上位レイヤープログラム}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+作成したプログラムを以下に示す．
+また，\url{https://github.com/Altairu/Person_Tracking_Roboware}に掲載している．
+
+\begin{lstlisting}[language=Python, caption=PID\_node.py]
+    import rclpy
+    from rclpy.node import Node
+    from std_msgs.msg import Float32MultiArray
+    
+    class PIDController:
+        def __init__(self, kp, ki, kd):
+            self.kp = kp
+            self.ki = ki
+            self.kd = kd
+            self.prev_error = 0.0
+            self.integral = 0.0
+    
+        def compute(self, target, current, dt):
+            if target == 0.0 and current == 0.0:
+                self.reset()
+                return 0.0  # 特別条件: 目標値と現在値が0の場合は出力も0
+    
+            error = target - current
+            self.integral += error * dt
+            derivative = (error - self.prev_error) / dt
+            self.prev_error = error
+    
+            return self.kp * error + self.ki * self.integral + self.kd * derivative
+    
+        def reset(self):
+            self.prev_error = 0.0
+            self.integral = 0.0
+    
+    class PIDNode(Node):
+        def __init__(self):
+            super().__init__('PID_node')
+    
+            self.create_subscription(Float32MultiArray, 'wheel_targets', self.target_callback, 10)
+            self.create_subscription(Float32MultiArray, 'wheel_feedback', self.feedback_callback, 10)
+            self.pub = self.create_publisher(Float32MultiArray, 'wheel_controls', 10)
+    
+            self.pid_right = PIDController(kp=0.003, ki=0.00005, kd=0.0)
+            self.pid_left = PIDController(kp=0.003, ki=0.00005, kd=0.0)
+    
+            self.target_right = 0.0
+            self.target_left = 0.0
+            self.current_right = 0.0
+            self.current_left = 0.0
+    
+            self.create_timer(0.1, self.control_loop)
+            self.last_time = self.get_clock().now()
+    
+        def target_callback(self, msg):
+            if len(msg.data) == 2:
+                self.target_right = msg.data[0]
+                self.target_left = msg.data[1]
+            else:
+                self.get_logger().error(f"Invalid data received in 'wheel_targets'. Expected 2 floats, got {len(msg.data)}")
+    
+        def feedback_callback(self, msg):
+            if len(msg.data) == 2:
+                self.current_right = msg.data[0]
+                self.current_left = msg.data[1]
+            else:
+                self.get_logger().error(f"Invalid data received in 'wheel_feedback'. Expected 2 floats, got {len(msg.data)}")
+    
+        def control_loop(self):
+            current_time = self.get_clock().now()
+            dt = (current_time - self.last_time).nanoseconds / 1e9
+            self.last_time = current_time
+    
+            control_signal_right = self.pid_right.compute(self.target_right, self.current_right, dt)
+            control_signal_left = self.pid_left.compute(self.target_left, self.current_left, dt)
+    
+            # 制御信号が有効な範囲内か検証
+            if not (self.is_valid_float(control_signal_right) and self.is_valid_float(control_signal_left)):
+                self.get_logger().error("Control signals contain invalid values. Skipping this loop.")
+                return
+    
+            # 制御信号をパブリッシュ
+            control_msg = Float32MultiArray()
+            control_msg.data = [float(control_signal_right), float(control_signal_left)]
+            self.pub.publish(control_msg)
+    
+            # デバッグ情報を出力
+            self.get_logger().info(
+                f"Target: Right={self.target_right}, Left={self.target_left} | "
+                f"Current: Right={self.current_right}, Left={self.current_left} | "
+                f"Control: Right={control_signal_right}, Left={control_signal_left}"
+            )
+    
+        def is_valid_float(self, value):
+            try:
+                float_value = float(value)
+                return float('-inf') < float_value < float('inf')  # 有限数の検証
+            except ValueError:
+                return False
+    
+    def main(args=None):
+        rclpy.init(args=args)
+        node = PIDNode()
+        rclpy.spin(node)
+        rclpy.shutdown()
+    
+    if __name__ == '__main__':
+        main()
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=RealSense\_node.py]
+    import rclpy
+    from rclpy.node import Node
+    from std_msgs.msg import Float32MultiArray
+    import pyrealsense2 as rs
+    import numpy as np
+    import torch
+    import cv2
+    
+    class RealSenseNode(Node):
+        def __init__(self):
+            super().__init__('realsense_node')
+            self.publisher = self.create_publisher(Float32MultiArray, 'camera_data', 10)
+    
+            # RealSense設定
+            self.pipeline = rs.pipeline()
+            config = rs.config()
+            config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+            config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+            self.pipeline.start(config)
+    
+            # YOLOモデルロード
+            self.model = torch.hub.load('/home/altair/Roboware/ultralytics/yolov5', 'custom', 
+                                        path='/home/altair/Roboware/ultralytics/yolov5/yolov5s.pt', 
+                                        source='local')
+            self.create_timer(0.1, self.process_frames)
+    
+            # フィルタ用変数
+            self.previous_distance = 0.0  # 前回の距離値
+            self.distance_history = []  # 距離履歴
+            self.history_size = 5  # 移動平均履歴の最大サイズ
+    
+        def process_frames(self):
+            try:
+                frames = self.pipeline.wait_for_frames()
+                depth_frame = frames.get_depth_frame()
+                color_frame = frames.get_color_frame()
+                if not depth_frame or not color_frame:
+                    return
+    
+                depth_image = np.asanyarray(depth_frame.get_data())
+                color_image = np.asanyarray(color_frame.get_data())
+                results = self.model(color_image)
+    
+                for result in results.xyxy[0]:  # 検出結果をループ
+                    box, conf, cls = result[:4], result[4], int(result[5])
+                    if cls == 0:  # クラス0（人物）のみ処理
+                        x1, y1, x2, y2 = map(int, box)
+                        center_x, center_y = (x1 + x2) // 2, (y1 + y2) // 2
+    
+                        raw_distance = depth_frame.get_distance(center_x, center_y)
+                        offset_x = center_x - (color_image.shape[1] // 2)
+    
+                        # 距離の処理
+                        filtered_distance = self.filter_distance(raw_distance)
+    
+                        # Publish camera data
+                        msg = Float32MultiArray()
+                        msg.data = [filtered_distance, float(offset_x)]
+                        self.publisher.publish(msg)
+    
+                        self.get_logger().info(f"Published camera data: Distance={filtered_distance:.2f}, Offset={offset_x}")
+    
+                        # 画面に検出結果を描画
+                        cv2.rectangle(color_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(color_image, f"Distance: {filtered_distance:.2f}m", (x1, y1 - 10),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                        cv2.putText(color_image, f"Offset: {offset_x}", (x1, y1 - 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    
+                        self.previous_distance = filtered_distance  # 前回の距離を更新
+                        break
+    
+                # カメラ映像を表示
+                cv2.imshow("RealSense Detection", color_image)
+                cv2.waitKey(1)
+    
+            except Exception as e:
+                self.get_logger().error(f"Error processing frames: {str(e)}")
+    
+        def filter_distance(self, current_distance):
+            """
+            距離が近づく場合はそのまま、遠ざかる場合はフィルタリングする。
+            """
+            if current_distance == 0.0:  # 無効値は無視
+                return self.previous_distance
+    
+            if current_distance < self.previous_distance:
+                # 近づいている場合: そのままの値を使用
+                self.distance_history = [current_distance]  # 履歴をリセット
+                return current_distance
+            else:
+                # 遠ざかる場合: 移動平均フィルタを適用
+                self.distance_history.append(current_distance)
+                if len(self.distance_history) > self.history_size:
+                    self.distance_history.pop(0)  # 古い値を削除
+                return sum(self.distance_history) / len(self.distance_history)
+    
+        def destroy_node(self):
+            self.pipeline.stop()
+            cv2.destroyAllWindows()
+            super().destroy_node()
+    
+    def main(args=None):
+        rclpy.init(args=args)
+        node = RealSenseNode()
+        rclpy.spin(node)
+        node.destroy_node()
+        rclpy.shutdown()
+    
+    if __name__ == '__main__':
+        main()
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Roboware\_node.py]
+    import rclpy
+    from rclpy.node import Node
+    from std_msgs.msg import String, Float32MultiArray
+    import csv
+    import os
+    import math
+    
+    class RobowareNode(Node):
+        def __init__(self):
+            super().__init__('Roboware_node')
+            self.subscription = self.create_subscription(
+                String,
+                'web_socket_pub',
+                self.listener_callback,
+                10
+            )
+            self.position_subscription = self.create_subscription(
+                Float32MultiArray,
+                'camera_data',
+                self.position_callback,
+                10
+            )
+            self.publisher = self.create_publisher(Float32MultiArray, 'wheel_targets', 10)
+    
+            self.mode = 0  # Initial mode (Control: 0, Follow: 1)
+            self.target_right = 0.0
+            self.target_left = 0.0
+            self.person_distance = 0.0
+            self.person_offset = 0.0
+            self.previous_offset = 0.0  # 前回のオフセット
+            self.kp_v = 5000.0  # Proportional gain for velocity
+            self.kp_omega = 50.0  # Proportional gain for angular velocity
+            self.kd_lambda = 0.1  # 最大微分ゲイン
+            self.a = 0.1  # 動的微分ゲイン調整パラメータ
+            self.navigation_constant = 2.0  # Proportional navigation constant (N)
+            self.dt = 0.1  # サンプリング間隔（秒）
+    
+            # CSVファイルの設定
+            self.csv_file = "new_MPN_data.csv"
+            self.initialize_csv()
+    
+            # タイマー設定
+            self.timer = self.create_timer(0.1, self.record_data)  # 0.1 秒ごとに実行
+            self.recording = False  # 記録中フラグ
+    
+        def initialize_csv(self):
+            """CSV ファイルを初期化し、ヘッダーを記録"""
+            if not os.path.exists(self.csv_file):
+                with open(self.csv_file, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow([
+                        'Time', 'PersonDistance', 'PersonOffset', 'V', 'Omega', 
+                        'TargetRight', 'TargetLeft'
+                    ])
+    
+        def save_to_csv(self, time, distance, offset, v, omega, right_speed, left_speed):
+            """データを CSV ファイルに追記"""
+            with open(self.csv_file, mode='a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([time, distance, offset, v, omega, right_speed, left_speed])
+    
+        def listener_callback(self, msg):
+            try:
+                data = list(map(float, msg.data.split(',')))
+                if len(data) != 6:
+                    self.get_logger().warn("Received invalid data length.")
+                    return
+    
+                mode, rx, ry, lx, ly, stop = data
+                self.mode = int(mode)
+    
+                if stop == 1:
+                    self.target_right = 0.0
+                    self.target_left = 0.0
+                    self.recording = False  # 記録停止
+                    self.get_logger().info("Emergency stop activated.")
+                elif self.mode == 0:  # Control Mode (手動モード)
+                    V = float((int(ry) - 106) * 200)
+                    omega = float(-1 * (int(lx) - 102) * 100)
+                    self.target_right = V + omega
+                    self.target_left = V - omega
+                    self.recording = False  # 記録停止
+                elif self.mode == 1:  # Follow Mode (画像処理モード)
+                    self.follow_person()
+                    self.recording = True  # 記録開始
+    
+                # Publish the wheel targets
+                self.publish_targets()
+    
+            except ValueError as e:
+                self.get_logger().error(f"Error parsing message: {e}")
+    
+        def position_callback(self, msg):
+            if len(msg.data) == 2:  # Assuming message contains [distance, offset]
+                self.person_distance = msg.data[0]
+                self.person_offset = msg.data[1]
+                self.get_logger().info(f"Updated position: Distance={self.person_distance}, Offset={self.person_offset}")
+            else:
+                self.get_logger().warn("Invalid position data received.")
+    
+        def follow_person(self):
+            # 修正比例航法 ( MPN )
+            distance = max(self.person_distance, 1.0)
+            offset_rate = (self.person_offset - self.previous_offset) / self.dt  # 偏差角速度
+    
+            # 動的微分ゲイン
+            dynamic_kd = self.kd_lambda * (1 - math.exp(-self.a * abs(offset_rate))) / (1 + math.exp(-self.a * abs(offset_rate)))
+    
+            # 直進速度
+            V = self.kp_v * (distance - 1.0)
+    
+            # 修正された角速度
+            omega = (
+                -1 * self.navigation_constant * self.kp_omega * self.person_offset / distance +
+                dynamic_kd * offset_rate
+            )
+    
+            V = max(min(V, 50000.0), -50000.0)  # Max forward/backward velocity
+            omega = max(min(omega, 30000.0), -30000.0)  # Max rotational velocity
+    
+            self.current_v = V
+            self.current_omega = omega
+    
+            # Calculate target velocities for left and right wheels
+            self.target_right = V + omega
+            self.target_left = V - omega
+    
+            # 前回の偏差を更新
+            self.previous_offset = self.person_offset
+    
+            self.get_logger().info(f"Follow mode | Distance={self.person_distance}, Offset={self.person_offset}, OffsetRate={offset_rate} | Kd={dynamic_kd:.2f} | V={V}, Omega={omega} | Target Right={self.target_right}, Left={self.target_left}")
+    
+        def publish_targets(self):
+            msg = Float32MultiArray()
+            msg.data = [self.target_right, self.target_left]
+            self.publisher.publish(msg)
+    
+        def record_data(self):
+            """0.1 秒ごとにデータを CSV に記録"""
+            if self.recording:  # 記録中のみデータを保存
+                current_time = self.get_clock().now().to_msg().sec  # 現在時刻を秒単位で取得
+                self.save_to_csv(
+                    current_time, 
+                    self.person_distance, 
+                    self.person_offset, 
+                    self.current_v, 
+                    self.current_omega, 
+                    self.target_right, 
+                    self.target_left
+                )
+    
+    def main(args=None):
+        rclpy.init(args=args)
+        node = RobowareNode()
+        rclpy.spin(node)
+        node.destroy_node()
+        rclpy.shutdown()
+    
+    if __name__ == '__main__':
+        main()
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=serial\_read\_node.py]
+    import rclpy
+    from rclpy.node import Node
+    from std_msgs.msg import Float32MultiArray
+    import serial
+    import struct
+    
+    class SerialReadNode(Node):
+        def __init__(self):
+            super().__init__('serial_read_node')
+    
+            # シリアルポート設定
+            self.serial_port = "/dev/ttyACM0"
+            self.baudrate = 115200
+            self.timeout = 0.01
+    
+            try:
+                self.ser = serial.Serial(self.serial_port, self.baudrate, timeout=self.timeout)
+                self.get_logger().info(f"Connected to serial port: {self.serial_port}")
+            except serial.SerialException as e:
+                self.get_logger().error(f"Failed to connect to serial port: {e}")
+                self.ser = None
+    
+            # パブリッシャ設定
+            self.publisher = self.create_publisher(Float32MultiArray, 'wheel_feedback', 10)
+    
+            # タイマーで定期的にデータを読む
+            self.timer = self.create_timer(0.01, self.read_from_serial)
+    
+        def read_from_serial(self):
+            if self.ser is not None and self.ser.in_waiting >= 6:
+                try:
+                    received_data = self.ser.read(6)
+                    if len(received_data) == 6 and received_data[0] == 0xA5 and received_data[1] == 0xA5:
+                        _, _, right_speed, left_speed = struct.unpack('>BBhh', received_data)
+                        msg = Float32MultiArray()
+                        msg.data = [float(right_speed), float(left_speed)]
+                        self.publisher.publish(msg)
+    
+                        # デバッグログ
+                        self.get_logger().info(f"Received from serial: Right={right_speed}, Left={left_speed}")
+                    else:
+                        self.get_logger().error("Invalid data format received from serial.")
+                except Exception as e:
+                    self.get_logger().error(f"Error reading data from serial: {e}")
+    
+    def main(args=None):
+        rclpy.init(args=args)
+        node = SerialReadNode()
+        rclpy.spin(node)
+        rclpy.shutdown()
+    
+    if __name__ == '__main__':
+        main()
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=serial\_send\_node.py]
+    import rclpy
+    from rclpy.node import Node
+    from std_msgs.msg import Float32MultiArray
+    import serial
+    import struct
+    
+    class SerialSendNode(Node):
+        def __init__(self):
+            super().__init__('serial_send_node')
+    
+            # シリアルポート設定
+            self.serial_port = "/dev/ttyACM0"
+            self.baudrate = 115200
+            self.timeout = 0.01
+    
+            try:
+                self.ser = serial.Serial(self.serial_port, self.baudrate, timeout=self.timeout)
+                self.get_logger().info(f"Connected to serial port: {self.serial_port}")
+            except serial.SerialException as e:
+                self.get_logger().error(f"Failed to connect to serial port: {e}")
+                self.ser = None
+    
+            # サブスクライバ設定
+            self.subscription = self.create_subscription(
+                Float32MultiArray,
+                'wheel_controls',
+                self.control_callback,
+                10
+            )
+    
+        def control_callback(self, msg):
+            if self.ser is not None:
+                try:
+                    if len(msg.data) == 2:
+                        right_control, left_control = msg.data
+                        send_data = struct.pack('>BBhh', 0xA5, 0xA5, int(right_control), int(left_control))
+                        self.ser.write(send_data)
+    
+                        # デバッグログ
+                        self.get_logger().info(f"Sent to serial: Right={right_control}, Left={left_control}")
+                    else:
+                        self.get_logger().error("Invalid control data length. Expected 2 values.")
+                except Exception as e:
+                    self.get_logger().error(f"Error sending data to serial: {e}")
+    
+    def main(args=None):
+        rclpy.init(args=args)
+        node = SerialSendNode()
+        rclpy.spin(node)
+        rclpy.shutdown()
+    
+    if __name__ == '__main__':
+        main()
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=web\_socket\_node.py]
+    import threading
+    import rclpy
+    from rclpy.node import Node
+    from std_msgs.msg import String, Float32MultiArray
+    
+    from fastapi import FastAPI, WebSocket as FastAPIWebSocket
+    from fastapi.responses import HTMLResponse
+    import uvicorn
+    import os
+    from socket import SO_REUSEADDR, SOL_SOCKET, socket
+    
+    
+    # IPアドレスとポートの指定
+    ipadress_ = '192.168.11.47'
+    port_ = 8080
+    
+    # HTMLファイルのパス
+    path = '/home/altair/Roboware/UI.txt'
+    
+    # FastAPIのインスタンスを作成
+    app = FastAPI()
+    
+    # HTMLファイルが存在するか確認し、読み込み
+    if not os.path.exists(path):
+        raise FileNotFoundError(f'File not found: {path}')
+    
+    with open(path, 'r') as f:
+        html = f.read()
+    
+    # ROS 2 ノードの定義
+    class WebSocketNode(Node):
+        def __init__(self):
+            msg = String()
+            super().__init__('web_socket_node')
+            self.send_data = ''
+    
+            # パブリッシャーを作成
+            self.pub = self.create_publisher(String, 'web_socket_pub', 10)
+            
+            # サブスクリプションを作成し、コールバック関数を設定
+            self.sub = self.create_subscription(Float32MultiArray, 'estimated_position', self.callback, 10)
+    
+            # FastAPIルートの定義
+            @app.get("/")
+            async def get():
+                return HTMLResponse(html)
+            
+            # WebSocketエンドポイントの定義
+            @app.websocket('/ws')
+            async def websocket_endpoint(websocket: FastAPIWebSocket):
+                await websocket.accept()
+                try:
+                    while True:
+                        # クライアントからのデータを受信
+                        receive_data = await websocket.receive_text()
+                        
+                        # 受信したデータをROSトピックにパブリッシュ
+                        msg.data = receive_data
+                        self.pub.publish(msg)
+                        print(msg.data)
+                        # サブスクライブしたデータをクライアントに送信
+                        string_send_data = ",".join(map(str, self.send_data))
+                        await websocket.send_text(string_send_data)
+                except Exception as e:
+                    print(f'WebSocket error: {str(e)}')
+                finally:
+                    print('WebSocket disconnected')
+    
+        # サブスクリプションのコールバック関数
+        def callback(self, sub_msg):
+            self.send_data = sub_msg.data
+    
+    # ROS 2ノードを実行する関数
+    def run_ros2():
+        rclpy.init()
+        node = WebSocketNode()
+        rclpy.spin(node)
+        rclpy.shutdown()
+    
+    # FastAPIサーバーを実行する関数
+    def run_fastapi():
+        # Uvicornの設定を作成
+        config = uvicorn.Config(app, host=ipadress_, port=port_, log_level="info")
+    
+        # Uvicornサーバーを作成
+        server = uvicorn.Server(config)
+    
+        # FastAPIサーバーを起動
+        server.run()
+    
+    # メイン関数
+    def main():
+        # ROS 2のspinをメインスレッドで実行
+        ros2_thread = threading.Thread(target=run_ros2)
+        ros2_thread.start()
+    
+        # FastAPIサーバーを別のスレッドで実行
+        fastapi_thread = threading.Thread(target=run_fastapi)
+        fastapi_thread.start()
+    
+        # 両方のスレッドが終了するのを待つ
+        ros2_thread.join()
+        fastapi_thread.join()
+    
+    if __name__ == '__main__':
+        main()
+\end{lstlisting}
+
+
+\begin{lstlisting}[language=HTML, caption=UI.txt]
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Robot Control</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                padding: 20px;
+            }
+            .button {
+                width: 200px;
+                height: 50px;
+                margin: 10px;
+                font-size: 16px;
+                font-weight: bold;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .button:active {
+                background-color: #0056b3;
+            }
+            .toggle-button {
+                width: 200px;
+                height: 50px;
+                font-size: 16px;
+                font-weight: bold;
+                margin: 20px auto;
+                background-color: #ff5722;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .toggle-button.active {
+                background-color: #4caf50;
+            }
+            .status {
+                margin-top: 20px;
+                font-size: 18px;
+            }
+            .status.connected {
+                color: green;
+            }
+            .status.disconnected {
+                color: red;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Robot Control Panel</h1>
+            <button class="toggle-button" id="modeToggle" onclick="toggleMode()">Mode: Control</button>
+            <div class="status" id="status">Status: Disconnected</div>
+        </div>
+    
+        <script>
+            let websocket;
+            let currentMode = 0; // Control: 0, Follow: 1
+            let stop = 0; // Emergency stop: 1 = Stop, 0 = Running
+            let lx = 100, ly = 100, rx = 100, ry = 100; // Joystick default values
+            const reconnectInterval = 5000;
+    
+            function connectWebSocket() {
+                websocket = new WebSocket("ws://192.168.11.47:8080/ws");
+    
+                websocket.onopen = function () {
+                    document.getElementById('status').innerText = "Status: Connected";
+                    document.getElementById('status').className = "status connected";
+                };
+    
+                websocket.onclose = function () {
+                    document.getElementById('status').innerText = "Status: Disconnected";
+                    document.getElementById('status').className = "status disconnected";
+                    setTimeout(connectWebSocket, reconnectInterval);
+                };
+    
+                websocket.onerror = function (error) {
+                    console.error("WebSocket error:", error);
+                };
+            }
+    
+            function toggleMode() {
+                const modeButton = document.getElementById("modeToggle");
+                currentMode = currentMode === 0 ? 1 : 0;
+    
+                if (currentMode === 1) {
+                    modeButton.innerText = "Mode: Follow";
+                    modeButton.classList.add("active");
+                } else {
+                    modeButton.innerText = "Mode: Control";
+                    modeButton.classList.remove("active");
+                }
+    
+                sendCommand();
+            }
+    
+            function updateGamepadValues() {
+                const gamepads = navigator.getGamepads();
+                const gamepad = gamepads[0];
+    
+                if (gamepad) {
+                    lx = gamepad.axes[0] * 100 + 100;
+                    ly = gamepad.axes[1] * -100 + 100;
+                    rx = gamepad.axes[2] * 100 + 100;
+                    ry = gamepad.axes[3] * -100 + 100;
+    
+                    // Send updated joystick values
+                    sendCommand();
+                }
+            }
+    
+            function sendCommand() {
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    const command = [currentMode, rx, ry, lx, ly, stop];
+                    websocket.send(command.join(","));
+                }
+            }
+    
+            function setupGamepad() {
+                setInterval(updateGamepadValues, 100);
+            }
+    
+            document.addEventListener('contextmenu', event => event.preventDefault());
+            connectWebSocket();
+            setupGamepad();
+        </script>
+    </body>
+    </html>
+\end{lstlisting}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{回路}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+作成した回路を以下に示す．
+また，\url{https://github.com/Altairu/AltairMD_V7}，
+\url{https://github.com/Altairu/ALTAIR_MDD_V2}に掲載している．
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.67\textwidth]{figure/MDDv2.pdf}
+    \caption{モータードライバードライバーV2 回路図}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.67\textwidth]{figure/MDV7.pdf}
+    \caption{モータードライバーV7 回路図}
+\end{figure}

@@ -1,0 +1,136 @@
+\documentclass[11pt]{ujarticle}
+%\documentclass{jlreq,11pt}
+%%%%%%% スタイルファイル %%%%%%%%%%%%%%%%%%%%%%
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+
+\usepackage{thesis}
+
+\usepackage[dvipdfmx]{graphicx}   % pdf 形式の図版取り込みのため
+\usepackage{ascmac}
+\usepackage{multicol}
+\usepackage{array}
+\usepackage{float}
+\usepackage{indent}
+\setlength{\parindent}{1em} % 段落の字下げを2文字分にする
+
+\usepackage{url}
+
+\usepackage{color}
+\definecolor{lightgray}{gray}{0.9}
+\definecolor{darkgray}{gray}{0.25}
+
+\usepackage{framed}
+\makeatletter
+\renewenvironment{leftbar}{%
+  \def\FrameCommand{\hspace{1.5zw}\textcolor{darkgray}{\vrule width 2pt}\hspace{0.5zw}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+ {\endMakeFramed}
+\makeatother
+
+
+\usepackage{listings,jvlisting} 
+\usepackage{xcolor} 
+\usepackage{caption}
+%\captionsetup[lstlisting]{labelfont=bf, font=footnotesize, format=plain, singlelinecheck=false}
+
+
+\renewcommand{\lstlistingname}{Code}
+
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    columns=fullflexible,    % ← extendedchars の代わり
+    numbers=left,
+    stepnumber=1,
+    numbersep=10pt,
+    frame=tb,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    showspaces=false,
+    showstringspaces=false,
+    tabsize=4,
+    extendedchars=true,      
+    inputencoding=utf8,       
+    backgroundcolor={\color[gray]{.95}},
+}
+
+
+
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　表紙　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% === 年度を記入 ============================================================
+\def\year{7}	% 令和 1 年度の場合
+
+% === 提出年月日を記入 ============================================================
+\def\submityear{7}	% 令和 7 年
+\def\submitmonth{5}	% 5 月
+\def\submitdate{12}	% 12 日
+
+% === 題目を記入 ============================================================
+\def\title{%
+  ～2 軸ロボットの運動制御実験～   Quanser Consulting 社製　2軸ロボット
+}%
+
+% === 題目を記入（背表紙用） ============================================================
+\def\spine{%
+  人追従搬送ロボットのシステム開発
+}%
+
+% === 学科を記入 ==========================================================
+\def\course{電気電子システム工学コース}
+
+% === 学籍番号を記入 ========================================================
+\def\student_number{a0527}
+
+% === 氏名を記入 ============================================================
+\def\name{野口 史遠}
+
+
+% === 表紙 ========================================================
+\thispagestyle{empty}
+\input{cover.tex} \newpage
+
+% === 論文要旨 ========================================================
+\thispagestyle{empty}
+%\input{abstract.tex} \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　目次　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagenumbering{roman}
+\tableofcontents         %% 目次 
+\newpage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　本文　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{part10.tex} \newpage
+\input{part20.tex} \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　参考文献　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{bibliography.tex} \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　謝辞　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{acknowledgment.tex} \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　付録　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{appendix.tex}
+
+\end{document}
