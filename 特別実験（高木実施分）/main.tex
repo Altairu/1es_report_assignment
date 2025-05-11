@@ -6,7 +6,7 @@
 
 \usepackage{thesis}
 
-\usepackage[dvipdfmx]{graphicx}   % pdf 形式の図版取り込みのため
+\usepackage[dvipdfmx]{graphicx}   % pdf 形式の図版取り込みのため　, draftは消す
 \usepackage{ascmac}
 \usepackage{multicol}
 \usepackage{array}
@@ -37,6 +37,12 @@
 \usepackage{xcolor} 
 \usepackage{caption}
 %\captionsetup[lstlisting]{labelfont=bf, font=footnotesize, format=plain, singlelinecheck=false}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}  % 既存のヘッダー・フッターを消す
+\fancyfoot[C]{\thepage}  % 中央下部にページ番号を出す
+\renewcommand{\headrulewidth}{0pt}  % ヘッダー罫線を消す
 
 
 \renewcommand{\lstlistingname}{Code}
@@ -123,6 +129,9 @@
 \input{part20.tex} \newpage
 \input{part30.tex} \newpage
 \input{part40.tex} \newpage
+\input{part50.tex} \newpage
+\input{part60.tex} \newpage
+\input{part70.tex} \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%　参考文献　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
