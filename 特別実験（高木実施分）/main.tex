@@ -27,9 +27,11 @@
   \MakeFramed {\advance\hsize-\width \FrameRestore}}%
  {\endMakeFramed}
 \makeatother
+\usepackage{subcaption}
 
 \usepackage{tcolorbox}
-
+\usepackage{verbatim} % verbatim 環境を使うために必要
+\tcbuselibrary{skins, listingsutf8}  % ← skins を忘れずに！
 
 \usepackage{listings,jvlisting} 
 \usepackage{xcolor} 
@@ -120,6 +122,7 @@
 \input{part10.tex} \newpage
 \input{part20.tex} \newpage
 \input{part30.tex} \newpage
+\input{part40.tex} \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%　参考文献　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
