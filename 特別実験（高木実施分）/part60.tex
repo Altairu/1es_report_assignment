@@ -70,23 +70,21 @@ p_{4x}(t) = 2\ell - \ell \cos \theta_y(t),\quad p_{4y}(t) = -\ell \sin \theta_y(
   \item 図~6.3（Subsystem ``Command'', ``Inverse'', ``Forward''）
 \end{itemize}
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.85\linewidth]{figure/robot_xy_models.pdf}
     \caption{手先位置制御（目標値が一定値の場合）}
     \label{fig:sim_robot_xy}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\linewidth]{figure/subsystem_all.pdf}
+    \includegraphics[width=1.0\linewidth]{figure/subsystem_all.pdf}
     \caption{Subsystem ``Command'', ``Inverse'', ``Forward'' の構成（図~6.3）}
     \label{fig:subsystems}
 \end{figure}
 
 \fbox{\textbf{ステップ 2}}： まず，MATLAB Command Window で
-
-\begin{tcolorbox}[colback=white!95!gray!5, colframe=black!75, fontupper=\ttfamily, title=]
 \begin{verbatim}
 >> armIPD
 各パラメータを設定して下さい
@@ -100,15 +98,11 @@ alphaM2y = 2
   …（略）…
 x_ref = 0.15; y_ref = -0.05;
 \end{verbatim}
-\end{tcolorbox}
 
 と入力し，パラメータを設定する．つぎに，シミュレーションを開始し，シミュレーション終了後に以下のように入力して結果をアニメーション表示する．
-
-\begin{tcolorbox}[colback=white!95!gray!5, colframe=black!75, fontupper=\ttfamily, title=]
 \begin{verbatim}
 >> sim_anime;
 \end{verbatim}
-\end{tcolorbox}
 
 アニメーション（図~\ref{fig:xy_animation}~(a)）によって各リンクに無理な動きがないことを確認した後，``ex\_robot\_xy.slx''をコンパイルしてから実機実験を行うと，図~\ref{fig:anime_link}~(b) の実験結果が得られる．
 
