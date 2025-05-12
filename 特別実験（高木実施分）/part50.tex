@@ -1,5 +1,7 @@
 \section{角度制御}
-\subsection{P制御}
+
+\subsection{実験内容}
+\subsubsection{P制御}
 \subsubsection{パラメータ設定}
 
 4章で述べたように，P コントローラ
@@ -48,7 +50,6 @@ $\zeta_x = \dfrac{a_x}{2\omega_{nx}} = \dfrac{a_x}{2\sqrt{b_x k_{Px}}},\quad
 
 \subsubsection{シミュレーションと実験}
 
-\noindent
 \fbox{\strut \textbf{ステップ 1}}：
 MATLAB/Simulink を起動し，カレントディレクトリを \texttt{\textyen Pcont} に移動する．つぎに，4.3 節で定めたパラメータを保存した MAT ファイル ``\texttt{armpara.mat}''，(5.4) 式にしたがって P コントローラを設計する M ファイル ``\texttt{armP.m}''，シミュレーションモデル ``\texttt{sim\_P.slx}''（図\ref{fig:simulink_model_4link2joint}），実機実験モデル ``\texttt{ex\_P.slx}''（図\ref{fig:sim_param}）を作成し，\texttt{C:\textbackslash robot\textbackslash Pcont} に保存する．ただし，目標値は
 \begin{align}
@@ -73,15 +74,15 @@ MATLAB/Simulink を起動し，カレントディレクトリを \texttt{\textye
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.45\linewidth}
+    \begin{subfigure}[b]{0.7\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{figure/sim_result_omega.png}
+        \includegraphics[width=\linewidth]{figure/sim_result_omega.pdf}
         \caption{シミュレーションモデル ``sim\_P.slx''}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{figure/sim_model_block.png}
+        \includegraphics[width=\linewidth]{figure/sim_model_block.pdf}
         \caption{Subsystem ``2D Robot Model'' の内容}
     \end{subfigure}
     \caption{P 制御の Simulink モデル}
@@ -98,13 +99,8 @@ MATLAB/Simulink を起動し，カレントディレクトリを \texttt{\textye
 \end{itemize}
 に変更．ブロック ``To Workspace (2,3,4,5,6)'' をダブルクリックし，保存形式を \textbf{配列} に変更する．
 
-\vspace{1em}
-
-\noindent
 \fbox{\textbf{ステップ 2}}： ``\texttt{armP\_sim.m}'' を実行し，図\ref{fig:sim_param}~(a) のシミュレーション結果を取得する．
 
-\vspace{1em}
-\noindent
 \fbox{\textbf{ステップ 3}}：
 $\omega_{Mx} = 15$，$\omega_{My} = 15$ としたときの P コントローラを設計するため，M ファイル ``\texttt{armP.m}'' を実行する．その結果，以下の実行結果が得られる．
 \newpage
@@ -123,42 +119,16 @@ $\omega_{Mx} = 15$，$\omega_{My} = 15$ としたときの P コントローラ�
 \noindent
 つぎに，設計された P コントローラを用いて，``\texttt{ex\_p.slx}'' を実行し，角度制御の実機実験を行う．得られた MAT ファイル ``\texttt{thetax.mat}'' の名前を ``\texttt{thetax15.mat}'' に変更する．
 
-\noindent
 \fbox{\textbf{ステップ 4}}：アームの角度を 0 にし，ステップ~3 において $\omega_{Mx} = 20$，$\omega_{My} = 20$ と指定し，同様の作業を行う．ただし，得られた MAT ファイル “\texttt{thetax.mat}” の名前を “\texttt{thetax20.mat}” に変更する．
 
-\noindent
 \fbox{\textbf{ステップ 5}}：
 アームの角度を 0 にし，ステップ~3 において $\omega_{Mx} = 30$，$\omega_{My} = 30$ と指定し，同様の作業を行う．
 ただし，得られた MAT ファイル “\texttt{thetax.mat}” の名前を “\texttt{thetax30.mat}” に変更する．
 
-\noindent
 \fbox{\textbf{ステップ 6}}：
 MATLAB Command Window で M ファイル ``\texttt{plot\_figure.m}'' を実行する．
 
-\subsubsection{実験結果及び考察}
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/sim_P-crop.pdf}
-        \caption{シミュレーション結果}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/plot_figure-crop.pdf}
-        \caption{実験結果}
-    \end{subfigure}
-    \caption{P 制御のステップ応答}
-    \label{fig:step_response}
-\end{figure}
-
-\noindent
-\textbf{図~\ref{fig:step_response}} より $\omega_{Mx}$ を大きくするにしたがって速応性は改善されていることがわかるが，
-オーバーシュートが大きくなっていることがわかる．また，考慮しなかったクローン摩擦の影響によって，
-実機実験においては定常偏差が生じていることがわかる．
-
-\subsection{P--D 制御（微分先行型 PD 制御）}
+\subsubsection{P--D制御}
 \subsubsection{パラメータ設定}
 
 P--D コントローラ（微分先行型 PD コントローラ）
@@ -238,12 +208,25 @@ $\omega_{nx}, \omega_{ny}$ および減衰係数 $\zeta_x, \zeta_y$ を指定し
 \end{equation}
 
 \subsubsection{シミュレーションと実験}
+\noindent
 \fbox{\textbf{ステップ 1}}：
 パラメータを記述した M ファイル ``armpara.m'' および (5.11) 式にしたがって P--D コントローラのパラメータを設計する M ファイル ``armPD.m''，シミュレーションモデル ``sim\_PD.slx''（図 5.3 (a)），実機実験モデル ``ex\_PD.slx''（図 5.3 (b)）を作成し，C:\textbackslash robot\textbackslash PDcont に保存する．
 
+\noindent
+\fbox{\textbf{ステップ 2}}：
+アームの角度を 0 にし，$\omega_{Mx} = 30$, $\zeta_{Mx} = 0.7$ と指定し，実験する．ただし，得られた MAT ファイル ``\texttt{thetax.mat}'' の名前を ``\texttt{thetax7.mat}'' に変更する．
+
+\vspace{1em}
+
+\noindent
+\fbox{\textbf{ステップ 3}}：
+アームの角度を 0 にし，$\omega_{Mx} = 30$, $\zeta_{Mx} = 1.0$ と指定し，実験する．ただし，得られた MAT ファイル ``\texttt{thetax.mat}'' の名前を ``\texttt{thetax1.mat}'' に変更する．
+
+\newpage
+
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{0.8\linewidth}
+    \begin{subfigure}{0.4\linewidth}
         \centering
         \includegraphics[width=\linewidth]{figure/sim_PD_slx.pdf}
         \caption{シミュレーションモデル ``sim\_PD.slx''}
@@ -269,37 +252,7 @@ $\omega_{nx}, \omega_{ny}$ および減衰係数 $\zeta_x, \zeta_y$ を指定し
     \label{fig:pd_simulink_model}
 \end{figure}
 
-\noindent
-\fbox{\textbf{ステップ 2}}：
-アームの角度を 0 にし，$\omega_{Mx} = 30$, $\zeta_{Mx} = 0.7$ と指定し，実験する．ただし，得られた MAT ファイル ``\texttt{thetax.mat}'' の名前を ``\texttt{thetax7.mat}'' に変更する．
-
-\vspace{1em}
-
-\noindent
-\fbox{\textbf{ステップ 3}}：
-アームの角度を 0 にし，$\omega_{Mx} = 30$, $\zeta_{Mx} = 1.0$ と指定し，実験する．ただし，得られた MAT ファイル ``\texttt{thetax.mat}'' の名前を ``\texttt{thetax1.mat}'' に変更する．
-
-\subsubsection{実験結果及び考察}
-
-シミュレーションおよび実機実験を行うと，\textbf{図 5.4} (a) のシミュレーション結果および \textbf{図 5.4} (b) の実験結果が得られる．P 制御と比べて安定度が改善されていることが確認できる．しかしながら，実機実験では，P 制御と同様，クローン摩擦などの影響で定常偏差が残っている．
-
-\begin{figure}[H]
-    \centering
-    \begin{minipage}{0.48\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/ex_pd_sim-crop.pdf}
-        \subcaption{シミュレーション結果}
-    \end{minipage}
-    \hfill
-    \begin{minipage}{0.48\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/ex_pd_hidari-crop.pdf}
-        \subcaption{実験結果}
-    \end{minipage}
-    \caption{P--D 制御のステップ応答}
-    \label{fig:pd_response}
-\end{figure}
-
+\subsubsection{I--PD制御}
 \subsubsection{パラメータ設定}
 
 P 制御や P--D 制御はコントローラに積分器 \(1/s\) を含んでいないため，クローン摩擦の影響でステップ応答に定常偏差が生じた．そこで，コントローラに積分器 \(1/s\) を含ませることによって，ステップ状の目標値に対する定常偏差を解消することを考える．
@@ -317,7 +270,7 @@ v_y(t) &= -k_{Py} \theta_y(t) + k_{Iy} \int_0^t e_y(\tau) d\tau - k_{Dy} \frac{d
 \left\{
 \begin{aligned}
 v_x(s) &= -k_{Px} \theta_x(s) + \frac{k_{Ix}}{s} e_x(s) - k_{Dx}s \theta_x(s) \\
-v_y(s) &= -k_{Py} \theta_y(s) + \frac{k_{Iy}}{s} e_y(s) - k_{Dy}s \theta_y(s)
+v_y(s) &= -k_{Py} \theta_y(s) + \frac{k_{Iy}}{s} e_y(s) - k_{Dx}s \theta_y(s)
 \end{aligned}
 \right.
 \tag{5.12}
@@ -329,7 +282,7 @@ v_y(s) &= -k_{Py} \theta_y(s) + \frac{k_{Iy}}{s} e_y(s) - k_{Dy}s \theta_y(s)
 \left\{
 \begin{aligned}
 T_x(s) &= \frac{b_x k_{Ix}}{s^3 + (a_x + b_x k_{Dx})s^2 + b_x k_{Px}s + b_x k_{Ix}} \\
-T_y(s) &= \frac{b_y k_{Iy}}{s^3 + (a_y + b_y k_{Dy})s^2 + b_y k_{Py}s + b_y k_{Iy}}
+T_y(s) &= \frac{b_y k_{Iy}}{s^3 + (a_y + b_y k_{Dx})s^2 + b_y k_{Py}s + b_y k_{Iy}}
 \end{aligned}
 \right.
 \tag{5.13}
@@ -353,7 +306,7 @@ T_{My}(s) &= \frac{\omega_{My}^3}{s^3 + \alpha_{My2} \omega_{My}^2 s^2 + \alpha_
 \left\{
 \begin{aligned}
 k_{Ix} &= \frac{\omega_{Mx}^3}{b_x}, \quad k_{Px} = \frac{\alpha_{Mx1} \omega_{Mx}^2}{b_x}, \quad k_{Dx} = \frac{\alpha_{Mx2} \omega_{Mx} - a_x}{b_x} \\
-k_{Iy} &= \frac{\omega_{My}^3}{b_y}, \quad k_{Py} = \frac{\alpha_{My1} \omega_{My}^2}{b_y}, \quad k_{Dy} = \frac{\alpha_{My2} \omega_{My} - a_y}{b_y}
+k_{Iy} &= \frac{\omega_{My}^3}{b_y}, \quad k_{Py} = \frac{\alpha_{My1} \omega_{My}^2}{b_y}, \quad k_{Dx} = \frac{\alpha_{My2} \omega_{My} - a_y}{b_y}
 \end{aligned}
 \right.
 \tag{5.15}
@@ -432,25 +385,33 @@ v_y(s) &= -k_{Py} \theta_y(s) + \frac{k_{Iy}}{s} e_y(s) - \frac{k_{Dy}s}{1 + T_{
     \label{fig:ipd_simulink}
 \end{figure}
 
-M ファイル ``armIPD.m'' を以下のように実行し，シミュレーションおよび実機実験を行うと，
-図~\ref{fig:ipd_simulink}~(a) のシミュレーション結果および
-図~\ref{fig:ipd_simulink}~(b) の実験結果が得られる．
-図~\ref{fig:ipd_simulink}~(b) より I--PD 制御では定常偏差が零になっていることがわかる．
-
-\subsubsection{実験結果及び考察}
+\subsection{実験結果}
 \begin{figure}[H]
     \centering
-    \begin{minipage}[b]{0.48\linewidth}
-      \centering
-      \includegraphics[width=\linewidth]{figure/ex_ipd_sim-crop.pdf}
-      \subcaption{シミュレーション結果}
-    \end{minipage}
-    \begin{minipage}[b]{0.48\linewidth}
-      \centering
-      \includegraphics[width=\linewidth]{figure/ex_ipd-crop.pdf}
-      \subcaption{実験結果}
-    \end{minipage}
-    \caption{I--PD 制御のステップ応答}
+    \includegraphics[width=0.6\linewidth]{figure/plot_figure.pdf}
+    \caption{P制御の応答}
+    \label{fig:step_response}
+\end{figure}
+
+図~\ref{fig:step_response} に示すように，P制御では速応性が改善される一方でオーバーシュートが大きくなることが確認された．
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{figure/ex_pd_hidari.pdf}
+    \caption{P--D制御の応答}
+    \label{fig:pd_response}
+\end{figure}
+
+また，図~\ref{fig:pd_response} に示すように，P--D制御では安定度が改善され，たが定常偏差が残るようになった．
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{figure/ex_ipd.pdf}
+    \caption{I--PD制御の応答}
     \label{fig:ipd_result}
-  \end{figure}
-  
+\end{figure}
+
+図~\ref{fig:ipd_result} に示すように，I--PD制御では定常偏差が解消された．
+\subsection{考察}
+P制御では速応性が向上するが，オーバーシュートが大きくなるため，減衰係数の調整が必要である．P--D制御では安定度が向上し，振動が抑制された．
+さらに，I--PD制御では定常偏差が解消され，目標値への追従性が向上した．

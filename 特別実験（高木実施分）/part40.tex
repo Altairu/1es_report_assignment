@@ -1,25 +1,7 @@
 \section{時間応答に基づくパラメータ同定}
-\subsection{パラメータ同定とは？}
 
-制御対象の物理パラメータの値は，はかりやメジャーなどの測定器で直接はかることができるとは限らない．
-制御対象の物理パラメータの値がわからないと，制御対象の数学モデルに基づいたコントローラ設計やシミュレーションを行うことができない．
-そこで，測定器で直接はかることができない物理パラメータを定めるため，制御対象に様々な信号を加え，このときの出力応答から物理パラメータの値を定める必要がある．このことを\textbf{パラメータ同定}と呼ぶ．
-
-本実験装置の場合，\ref{sec:2_1} 節で述べたように，$v_x(t)$，$v_y(t)$ から $\theta_x(t)$，$\theta_y(t)$ への伝達関数 $G_x(s)$，$G_y(s)$ は
-\begin{equation}
-\left\{
-\begin{aligned}
-G_x(s) &= \frac{b_x}{s(s + a_x)}, \quad a_x = \frac{c_x}{J_x}, \quad b_x = \frac{k_{fx}}{J_x}, \\
-G_y(s) &= \frac{b_y}{s(s + a_y)}, \quad a_y = \frac{c_y}{J_y}, \quad b_y = \frac{k_{fy}}{J_y}
-\end{aligned}
-\right.
-\label{eq:gx_gy_transfer}
-\end{equation}
-
-であるから，$a_x$，$b_x$，$a_y$，$b_y$ の値を実験により定めることになる．
-パラメータ同定を行う方法には，ステップ応答などの時間応答に基づく方法と周波数応答に基づく方法があるが，ここでは，時間応答に基づく方法を用いる．
-
-\subsection{パラメータ同定の手順}
+\subsection{実験内容}
+\subsubsection{パラメータ同定の手順}
 
 \paragraph{Pコントローラ}
 
@@ -33,7 +15,7 @@ G_y(s) &= \frac{b_y}{s(s + a_y)}, \quad a_y = \frac{c_y}{J_y}, \quad b_y = \frac
     T_x(s) = \frac{G_x(s)k_{Px}}{1 + G_x(s)k_{Px}} = \frac{b_x k_{Px}}{s^2 + a_x s + b_x k_{Px}} = \frac{\omega_{nx}^2}{s^2 + 2 \zeta_x \omega_{nx} s + \omega_{nx}^2} \tag{4.3}
 \end{align}
 
-\[
+\[ 
 \left\{
 \begin{aligned}
     &\text{固有角周波数:} && \omega_{nx} = \sqrt{b_x k_{Px}} \\
@@ -65,7 +47,6 @@ G_y(s) &= \frac{b_y}{s(s + a_y)}, \quad a_y = \frac{c_y}{J_y}, \quad b_y = \frac
     \end{aligned}
     \right. \tag{4.6}
 \end{equation}
-
 
 ただし，
 
@@ -138,7 +119,7 @@ G_y(s) &= \frac{b_y}{s(s + a_y)}, \quad a_y = \frac{c_y}{J_y}, \quad b_y = \frac
 モータ軸の角度 $\theta_x(t)$ と $\theta_y(t)$ が $0$~[rad] となるように P 制御する．
 実機実験モデル ``\texttt{ex\_P.slx}'' のブロック ``Step''，``Step1'' をダブルクリックし，
 
-\[
+\[ 
 \begin{array}{ll}
 \text{Step}~(\theta_x^{\mathrm{ref}}(t))\!: &
 \left\{
@@ -169,7 +150,7 @@ G_y(s) &= \frac{b_y}{s(s + a_y)}, \quad a_y = \frac{c_y}{J_y}, \quad b_y = \frac
 \textbf{ステップ 4}：
 実機実験モデル ``\texttt{ex\_P.slx}'' のブロック ``Step''，``Step1'' をダブルクリックし，
 
-\[
+\[ 
 \begin{array}{ll}
 \text{Step}~(\theta_x^{\mathrm{ref}}(t))\!: &
 \left\{
@@ -193,10 +174,11 @@ G_y(s) &= \frac{b_y}{s(s + a_y)}, \quad a_y = \frac{c_y}{J_y}, \quad b_y = \frac
 \]
 
 のように変更して，モータ軸の目標角度 $\theta_x^{\mathrm{ref}}(t)$，$\theta_y^{\mathrm{ref}}(t)$ を設定する．
-\vspace{1em}
-\noindent
-\textbf{ステップ 5}： MATLAB Command Window で M ファイル ``\texttt{idarm.m}'' を実行すると，
 
+\noindent
+\textbf{ステップ 5}： MATLAB Command Window で M ファイル ``\texttt{idarm.m}'' を実行する.
+
+\subsection{実験結果}
 \begin{tabbing}
 \hspace{1cm}\=\kill
 \> \texttt{>> idarm} \\
@@ -206,9 +188,7 @@ G_y(s) &= \frac{b_y}{s(s + a_y)}, \quad a_y = \frac{c_y}{J_y}, \quad b_y = \frac
 \> \texttt{by = 75.7744} \hspace{6cm} \texttt{b\_y = 75.7744}
 \end{tabbing}
 
-\vspace{1em}
-\noindent
-ようになり，パラメータの同定値が計算される．また，図~\ref{fig:step_response2} に示すグラフが表示される．なお，図~\ref{fig:step_response} における実線は実験データ，破線は同定された値を用いたシミュレーションデータのプロットである．また，$a_x$，$b_x$，$a_y$，$b_y$ は \texttt{armpara.mat} に保存されている．
+図~\ref{fig:step_response2} に示すように，実験データと同定された値を用いたシミュレーションデータが一致していることが確認できた．
 
 \begin{figure}[htbp]
     \centering
@@ -226,3 +206,9 @@ G_y(s) &= \frac{b_y}{s(s + a_y)}, \quad a_y = \frac{c_y}{J_y}, \quad b_y = \frac
     \caption{P コントローラを用いたときのステップ応答 ($k_{Px}=20,\ k_{Py}=20$)}
     \label{fig:step_response2}
 \end{figure}
+
+
+\subsection{考察}
+実験結果より，未知パラメータ $a_x$，$b_x$，$a_y$，$b_y$ を正確に同定できたことが確認できた．
+しかし，定常偏差が残っていることが確認できた．これは，P コントローラの特性に起因するものである．
+

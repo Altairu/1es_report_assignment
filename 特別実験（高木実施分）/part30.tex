@@ -1,7 +1,8 @@
 % !TEX root = main.tex
 \section{アクチュエータ，センサの動作確認}
 
-\subsection{2軸ロボット実験装置におけるアクチュエータとセンサ}
+\subsection{実験内容}
+\subsubsection{2軸ロボット実験装置におけるアクチュエータとセンサ}
 
 \begin{figure}[H]
     \centering
@@ -14,7 +15,7 @@
 DCモータを駆動させるためにパソコンにより計算された指令電圧は，I/OボードQ8-USBでD/A変換された後，アンプを介してDCモータに入力される．
 また，リンク1，リンク4の回転角は角度センサであるポテンショメータにより電圧値として検出され，I/OボードQ8-USBでA/D変換された後，パソコンに取り込まれている．
 
-\subsection{D/A変換とアクチュエータの動作確認}
+\subsubsection{D/A変換とアクチュエータの動作確認}
 \subsubsection{実験装置のセッティングと\textbf{MATLAB}/Simulinkの起動}
 
 図\ref{fig:experiment_setup}に示すように，実験装置の2つの軸にそれぞれリンクを取り付ける．
@@ -53,7 +54,7 @@ DCモータを駆動させるためにパソコンにより計算された指令
 
     \begin{figure}[H]
         \centering
-        \includegraphics[width=0.8\linewidth]{figure/da_conv.pdf}
+        \includegraphics[width=0.9\linewidth]{figure/da_conv.pdf}
         \caption{da\_conv.slx}
         \label{fig:da_conv}
     \end{figure}
@@ -83,20 +84,17 @@ DCモータを駆動させるためにパソコンにより計算された指令
     \end{figure}
     
     つぎに，“da\_conv.slx” をコンパイルするためには，図~\ref{fig:compile_button} に示すように Simulink モデルのツールバーの右端にあるアイコンをクリック，モデルのビルドを選択すればよい．別の方法としては Simulink モデルのメニューから「QUARC/Build」を選択しても良い．このとき，エラーがなければ MATLAB Command Window に以下のようなメッセージが表示され，コンパイルが終了する．
-
-    \begin{tcolorbox}[colback=white, colframe=black, boxrule=0.5pt, sharp corners]
-        \footnotesize
-        \begin{verbatim}
-        ### コードをビルドフォルダーに生成しています: D:\student_senkouka\group_xx\da\da_conv_quarc_win64
-        ### Invoking Target Language Compiler on da_conv.rtw
-        ### Using System Target File: C:\Program Files\Quanser\QUARC\quarc_win64.tlc
-        ### Loading TLC function libraries
-        .....................《略》 .....................
-        ### Created executable da_conv.rtw-win64
-        ### Downloading da_conv to target ’shmem://quarc-target:1’ ...
-        ### Model da_conv has been downloaded to target ’shmem://quarc-target:1’
-        \end{verbatim}
-        \end{tcolorbox}
+\footnotesize
+\begin{verbatim}
+### コードをビルドフォルダーに生成しています: D:\student_senkouka\group_xx\da\da_conv_quarc_win64
+### Invoking Target Language Compiler on da_conv.rtw
+### Using System Target File: C:\Program Files\Quanser\QUARC\quarc_win64.tlc
+### Loading TLC function libraries
+.....................《略》 .....................
+### Created executable da_conv.rtw-win64
+### Downloading da_conv to target ’shmem://quarc-target:1’ ...
+### Model da_conv has been downloaded to target ’shmem://quarc-target:1’
+\end{verbatim}
 
         \subsubsection{実験}
 
@@ -113,7 +111,7 @@ DCモータを駆動させるためにパソコンにより計算された指令
             \label{fig:experiment_start}
         \end{figure}
         
-        \subsection{A/D 変換とセンサの動作確認}
+        \subsubsection{A/D 変換とセンサの動作確認}
 
         本実験装置では，角度センサにポテンショメータを用いている．このポテンショメータは軸の回転角に比例した電圧 $-5 \sim +5$~[V] をアナログ信号として出力し，
         また，この電圧と軸の回転角との関係は，$1$~[V] あたり $-35$~[deg] である．
@@ -122,7 +120,7 @@ DCモータを駆動させるためにパソコンにより計算された指令
         
         \begin{figure}[H]
             \centering
-            \includegraphics[width=0.8\linewidth]{figure/ad_conv_model.pdf}
+            \includegraphics[width=0.9\linewidth]{figure/ad_conv_model.pdf}
             \caption{“\texttt{ad\_conv.slx}”}
             \label{fig:ad_conv_model}
         \end{figure}
@@ -175,45 +173,12 @@ DCモータを駆動させるためにパソコンにより計算された指令
     \label{fig:output_voltage_change}
 \end{figure}
 
-\subsection{4リンク2軸ロボットのSimulinkでの表現}
+\subsection{実験結果}
+\subsubsection{D/A変換とアクチュエータの動作確認}
+図~\ref{fig:response_under_constant_voltage} に示すように，DCモータに $2$~[V] の電圧を加えると，リンクが時計回りに回転し，リンクの角度 $\theta_{x}(t)$，$\theta_{y}(t)$ が弧度法の単位~[rad] で得られることが確認できた．
 
-アクチュエータの動作確認を行った結果，正の電圧をDCモータに加えるとリンクが時計回りに回った．また，センサの動作確認を行った結果，センサにより角度に相当する電圧が検出できた（$1~[\mathrm{V}]$ あたり $-35~[\mathrm{deg}] = -0.6109~[\mathrm{rad}]$）．このことを考慮し，4リンク2軸ロボットをSimulinkで表現すると，図~\ref{fig:simulink_model_4link2joint} となる．
+\subsubsection{A/D変換とセンサの動作確認}
+図~\ref{fig:output_voltage_change} に示すように，リンクを反時計回りに $45$~[deg] 回転させたとき，センサからの電圧が $-1.2857$~[V] 程度であることが確認できた．
 
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}[b]{0.8\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/ad_da_conv.pdf}
-        \caption{``ad\_da\_conv.slx''}
-    \end{subfigure}
-    \vspace{1em}
-    \begin{subfigure}[b]{0.8\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/subsystem_2drobot.pdf}
-        \caption{Subsystem ``2D Robot'' の内容}
-    \end{subfigure}
-    \caption{4リンク2軸ロボットのSimulinkでの表現}
-    \label{fig:simulink_model_4link2joint}
-\end{figure}
-
-\noindent
-\texttt{ad\_da\_conv.slx} をコンパイルして実行すると，図~\ref{fig:response_under_constant_voltage} の実験結果が得られ，DCモータに $2$~[V] の電圧を加えると，リンクが時計回りに回転し，リンクの角度 $\theta_{x}(t)$，$\theta_{y}(t)$ が弧度法の単位~[rad] で得られていることがわかる．また，ポテンショメータが有効な範囲は $-175$～$175$~[deg] 程度であることも確認できる．
-
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/thetax_response.pdf}
-        \caption{$\theta_{x}(t)$ の応答}
-        \label{fig:thetax_response}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/thetay_response.pdf}
-        \caption{$\theta_{y}(t)$ の応答}
-        \label{fig:thetay_response}
-    \end{subfigure}
-    \caption{一定電圧を加えたときの時間応答}
-    \label{fig:response_under_constant_voltage}
-\end{figure}
+\subsection{考察}
+アクチュエータの動作確認では，正の電圧をDCモータに加えるとリンクが時計回りに回転することが確認できた．また，センサの動作確認では，ポテンショメータが角度に比例した電圧を出力することが確認できた．これにより，2軸ロボットの動作が正確に制御可能であることが示された．
