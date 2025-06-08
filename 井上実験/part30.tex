@@ -1,184 +1,413 @@
 % !TEX root = main.tex
-\section{アクチュエータ，センサの動作確認}
+\section{実験方法}
 
-\subsection{実験内容}
-\subsubsection{2軸ロボット実験装置におけるアクチュエータとセンサ}
+本実験では，段階的にWebデータベースを構築するため，複数のステップに分けて作業を行った．ここでは，まず最初に行ったXAMPPのインストールおよび動作確認について記述する．
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\linewidth]{figure/actuator_sensor.pdf}
-    \caption{アクチュエータ（DCモータ）とセンサ（ポテンショメータ）}
-    \label{fig:actuator_sensor}
-\end{figure}
+\subsection*{環境}
+\begin{itemize}
+  \item OS：Ubuntu 22.04 LTS
+\end{itemize}
 
-図\ref{fig:actuator_sensor}に示すように，2軸ロボット実験装置はリンク1，リンク4がギアを介してDCモータにより回転するようになっている．
-DCモータを駆動させるためにパソコンにより計算された指令電圧は，I/OボードQ8-USBでD/A変換された後，アンプを介してDCモータに入力される．
-また，リンク1，リンク4の回転角は角度センサであるポテンショメータにより電圧値として検出され，I/OボードQ8-USBでA/D変換された後，パソコンに取り込まれている．
+\subsection*{実験Ⅰ：XAMPPのインストールと起動確認}
 
-\subsubsection{D/A変換とアクチュエータの動作確認}
-\subsubsection{実験装置のセッティングと\textbf{MATLAB}/Simulinkの起動}
+XAMPPは，Apache Webサーバ，MySQL（MariaDB），PHP，Perl などを一括でインストール・管理できるパッケージである．本実験では，XAMPPをインストールしてApacheの起動確認を行った．
 
-図\ref{fig:experiment_setup}に示すように，実験装置の2つの軸にそれぞれリンクを取り付ける．
-また，図\ref{fig:terminal_connection}のようにターミナル，Universal Power Module，2軸ロボットのケーブルが接続されていることを確認する．
-ただし，左側のDCモータおよびポテンショメータに対するチャネルを\textbf{CH0}（チャネル0），
-右側のDCモータおよびポテンショメータに対するチャネルを\textbf{CH1}（チャネル1）とする．
+\vspace{1zh}
+\noindent 手順は以下の通りである．
+
+\begin{enumerate}
+  \item 以下の公式サイトより，XAMPPのLinux版インストーラをダウンロードする．  
+        \url{https://www.apachefriends.org/jp/index.html}
+
+  \item ターミナルでダウンロードディレクトリに移動する．
+\begin{lstlisting}[language=bash]
+cd ~/Downloads/
+\end{lstlisting}
+
+  \item インストーラに実行権限を与える．
+\begin{lstlisting}[language=bash]
+sudo chmod 755 xampp-linux-x64-8.0.10-0-installer.run
+\end{lstlisting}
+
+  \item インストーラを実行する．
+\begin{lstlisting}[language=bash]
+sudo ./xampp-linux-x64-8.0.10-0-installer.run
+\end{lstlisting}
+
+\item GUIベースのマネージャを起動する．
+\begin{lstlisting}[language=bash]
+sudo /opt/lampp/manager-linux-x64.run
+\end{lstlisting}
+
+  \item LAMP環境を起動する．
+\begin{lstlisting}[language=bash]
+sudo /opt/lampp/lampp start
+\end{lstlisting}
+
+  \item ブラウザで \texttt{http://localhost/} を開き，「XAMPPへようこそ」と表示されればApacheの動作確認は完了である．
+
+  \item 確認後，LAMP環境を停止する．
+\begin{lstlisting}[language=bash]
+sudo /opt/lampp/lampp stop
+\end{lstlisting}
 
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\linewidth]{figure/experiment_setup.pdf}
-    \caption{実験装置}
-    \label{fig:experiment_setup}
-\end{figure}
+\end{enumerate}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\linewidth]{figure/terminal_connection.pdf}
-    \caption{実験装置の接続}
-    \label{fig:terminal_connection}
-\end{figure}
+この操作により，Webサーバの動作環境が整い，今後のWebデータベース構築に必要な基盤が準備された．
 
-つぎに，Windowsスタートメニューより MATLAB R2013a を起動する．MATLAB のコマンドウィンドウ上で以下のように入力し，カレントディレクトリ（作業するフォルダ）を変更する．（Xは自分の班名に置き換える．）
+\subsection*{実験Ⅱ：Webページ作成とデータベース構築}
 
-\begin{tcolorbox}[colback=white,colframe=black]
-    \verb|cd D:\student_senkouka\group_X|
-    \end{tcolorbox}
+本実験では，HTMLによるWebページの作成と，phpMyAdminを用いたデータベース（MariaDB）の作成・検索，およびPHPを用いたWebデータベースの構築を行った．
 
-    \subsubsection{モデルの移動と結線}
+\subsubsection*{1. Webページの作成}
 
-    左右のDCモータに2\,[V]の電圧を加えたときのリンクの動きを調べてみよう。
-    MATLABの“現在のフォルダー”にある，“da”フォルダーを選択し，“da\_conv.slx”をダブルクリックしてSimulinkモデルを起動する。
-    起動したモデルを図\ref{fig:da_conv}のように結線する。
-    また，各ブロックをダブルクリックして，パラメータを変更する。
+XAMPPのドキュメントルートに移動し，HTMLファイルを作成した．
+
+\begin{lstlisting}[language=bash]
+cd /opt/lampp/htdocs/
+\end{lstlisting}
+
+作成したファイル \texttt{sample.html} は以下の通りである．
+
+\begin{lstlisting}[language=html]
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>こんにちは</title>
+</head>
+<body>
+<h1>見出し</h1>
+<p>文章を書きましょう</p>
+</body>
+</html>
+\end{lstlisting}
+
+これをブラウザで \texttt{http://localhost/sample.html} にアクセスすることで表示を確認した．
+
+次に，CSSによって文字色を赤く変更したスタイルを追加した．
+
+\begin{lstlisting}[language=html]
+<style>
+ p {
+   color: red;
+ }
+</style>
+\end{lstlisting}
+
+\subsubsection*{2. データベースの作成・検索}
+
+\texttt{phpMyAdmin}を用いて，データベース \texttt{maizuru} を作成し，以下の2つのテーブルを構築した．
+
+\vspace{0.5zh}
+\begin{itemize}
+  \item \textbf{nameテーブル}：no, name（TEXT型）
+  \item \textbf{birthplaceテーブル}：name, birthplace（TEXT型）
+\end{itemize}
+
+データを追加後，以下のSQL文でデータを検索・表示した．
+
+\begin{lstlisting}[language=SQL]
+SELECT * FROM name;
+\end{lstlisting}
+
+さらに，2つのテーブルを結合して，対応する生誕地を表示するクエリを実行した．
+
+\begin{lstlisting}[language=SQL]
+SELECT name.no, name.name, birthplace.birthplace 
+FROM name 
+INNER JOIN birthplace 
+ON name.name = birthplace.name;
+\end{lstlisting}
+
+\subsubsection*{3. Webデータベースの構築（PHP）}
+
+MariaDBのパスワードを設定するため，\texttt{--skip-grant-tables} モードで起動し，次のコマンドでパスワードを直接設定した．
+
+\begin{lstlisting}[language=bash]
+sudo /opt/lampp/sbin/mysqld --skip-grant-tables --skip-networking &
+sudo /opt/lampp/bin/mysql -u root
+
+UPDATE mysql.user 
+SET authentication_string = PASSWORD('password') 
+WHERE User = 'root' AND Host = 'localhost';
+FLUSH PRIVILEGES;
+sudo killall mysqld
+sudo /opt/lampp/lampp start
+\end{lstlisting}
+
+その後，PHPを用いた接続確認とデータ表示のため，以下のファイルを配置した．
+
+\textbf{connect.php}
+\begin{lstlisting}[language=php]
+    <html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>PHP TEST</title>
+    </head>
+    <body>
     
-
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.9\linewidth]{figure/da_conv.pdf}
-        \caption{da\_conv.slx}
-        \label{fig:da_conv}
-    \end{figure}
+    <?php
     
-    \subsubsection{Simulation Parameters のパラメータ設定}
-
-    Simulink モデルウィンドウのツールバーから``モデルコンフィグレーションパラメーター''を選択し，
-    ``ソルバー''を選択，図 \ref{fig:sim_param} のようにパラメータを設定する．
+    $link = mysqli_connect('localhost', 'root', 'password');
+    if (!$link) {
+        die('接続失敗です。'.mysql_error());
+    }
     
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\linewidth]{figure/sim_param.pdf}
-        \caption{Simulation Parameters のパラメータ設定}
-        \label{fig:sim_param}
-    \end{figure}
+    print('<p>接続に成功しました。</p>');
     
-    \subsubsection{コンパイル}
-    Ｄドライブのディレクトリ（フォルダ）D:\textbackslash student\_senkouka\textbackslash group\_X\textbackslash 
-    da（Xは自分の班名）がカレントディレクトリとなっているかどうか確かめる．
-    カレントディレクトリとなっていない場合は現在のフォルダーを操作してカレントディレクトリを変更する．
+    $db_selected = mysqli_select_db($link,'maizuru');
+    if (!$db_selected){
+        die('データベース選択失敗です。'.mysql_error());
+    }
     
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\linewidth]{figure/compile_button.pdf}
-        \caption{コンパイル}
-        \label{fig:compile_button}
-    \end{figure}
+    print('<p>データベースを選択しました。</p>');
     
-    つぎに，“da\_conv.slx” をコンパイルするためには，図~\ref{fig:compile_button} に示すように Simulink モデルのツールバーの右端にあるアイコンをクリック，モデルのビルドを選択すればよい．別の方法としては Simulink モデルのメニューから「QUARC/Build」を選択しても良い．このとき，エラーがなければ MATLAB Command Window に以下のようなメッセージが表示され，コンパイルが終了する．
-\footnotesize
-\begin{verbatim}
-### コードをビルドフォルダーに生成しています: D:\student_senkouka\group_xx\da\da_conv_quarc_win64
-### Invoking Target Language Compiler on da_conv.rtw
-### Using System Target File: C:\Program Files\Quanser\QUARC\quarc_win64.tlc
-### Loading TLC function libraries
-.....................《略》 .....................
-### Created executable da_conv.rtw-win64
-### Downloading da_conv to target ’shmem://quarc-target:1’ ...
-### Model da_conv has been downloaded to target ’shmem://quarc-target:1’
-\end{verbatim}
+    // MySQLに対する処理
+    
+    $close_flag = mysqli_close($link);
+    
+    if ($close_flag){
+        print('<p>切断に成功しました。</p>');
+    }
+    
+    ?>
+    </body>
+    </html>
+\end{lstlisting}
 
-        \subsubsection{実験}
+\textbf{select.php}
+\begin{lstlisting}[language=php]
+    <html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>PHP TEST</title>
+    </head>
+    <body>
+    
+    <?php
+    
+    $link = mysqli_connect('localhost', 'root', 'password');
+    if (!$link) {
+        die('接続失敗です。'.mysql_error());
+    }
+    
+    print('<p>接続に成功しました。</p>');
+    
+    $db_selected = mysqli_select_db($link,'maizuru');
+    if (!$db_selected){
+        die('データベース選択失敗です。'.mysqli_error());
+    }
+    
+    print('<p>データベースを選択しました。</p>');
+    
+    mysqli_set_charset($link,'utf8');
+    
+    $result = mysqli_query($link,'SELECT * FROM name');
+    if (!$result) {
+        die('クエリーが失敗しました。'.mysql_error());
+    }
+    
+    while ($row = mysqli_fetch_assoc($result)) {
+        print('<p>');
+        print('id='.$row['no']);
+        print(', name='.$row['name']);
+        print('</p>');
+    }
+    
+    $close_flag = mysqli_close($link);
+    
+    if ($close_flag){
+        print('<p>切断に成功しました。</p>');
+    }
+    
+    ?>
+    </body>
+    </html>
+\end{lstlisting}
 
-        コンパイル終了後，図~\ref{fig:experiment_start} に示すように Simulink モデルのツールバーで “ターゲットに接続” アイコンをクリックし，
-        その右のアイコンの “実行” をクリックすると，モータドライバに一定の電圧 2~[V] が加わり，
-        リンクが一定速度で時計回りに回転することが確認できる．停止させる場合には “実行” アイコンの右にある “停止” アイコンをクリックすればよい．
-        実行の方法として，Simulink モデルのメニューから「QUARC/Start」を選択しても実行ができる．
-        また停止方法として Simulink モデルのメニューから「QUARC/Stop」を選択してもよい．
-        
-        \begin{figure}[H]
-            \centering
-            \includegraphics[width=0.85\linewidth]{figure/experiment_start.pdf}
-            \caption{実機実験の開始}
-            \label{fig:experiment_start}
-        \end{figure}
-        
-        \subsubsection{A/D 変換とセンサの動作確認}
+\textbf{select2.php}
+\begin{lstlisting}[language=php]
+    <html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>PHP TEST</title>
+    </head>
+    <body>
+    
+    <?php
+    
+    $link = mysqli_connect('localhost', 'root', 'password');
+    if (!$link) {
+        die('接続失敗です。'.mysql_error());
+    }
+    
+    print('<p>接続に成功しました。</p>');
+    
+    $db_selected = mysqli_select_db($link,'maizuru');
+    if (!$db_selected){
+        die('データベース選択失敗です。'.mysql_error());
+    }
+    
+    print('<p>データベースを選択しました。</p>');
+    
+    mysqli_set_charset($link,'utf8');
+    
+    $result = mysqli_query($link,'SELECT name.no, name.name, birthplace.birthplace FROM name inner join birthplace on name.name=birthplace.name');
+    if (!$result) {
+        die('クエリーが失敗しました。'.mysqli_error());
+    }
+    
+    while ($row = mysqli_fetch_assoc($result)) {
+        print('<p>');
+        print('id='.$row['no']);
+        print(', name='.$row['name']);
+        print(', birthplace='.$row['birthplace']);
+        print('</p>');
+    }
+    
+    $close_flag = mysqli_close($link);
+    
+    if ($close_flag){
+        print('<p>切断に成功しました。</p>');
+    }
+    
+    ?>
+    </body>
+    </html>
+\end{lstlisting}
 
-        本実験装置では，角度センサにポテンショメータを用いている．このポテンショメータは軸の回転角に比例した電圧 $-5 \sim +5$~[V] をアナログ信号として出力し，
-        また，この電圧と軸の回転角との関係は，$1$~[V] あたり $-35$~[deg] である．
-        
-        ポテンショメータの動作確認をするために，図~\ref{fig:ad_conv_model} の実機実験モデル “\texttt{ad\_conv.slx}” を作成する．
-        
-        \begin{figure}[H]
-            \centering
-            \includegraphics[width=0.9\linewidth]{figure/ad_conv_model.pdf}
-            \caption{“\texttt{ad\_conv.slx}”}
-            \label{fig:ad_conv_model}
-        \end{figure}
-        
-        つぎに，図~\ref{fig:parameter_setting} で示したようにパラメータ設定を行い，図~\ref{fig:compile_adconv} 節で示したように “\texttt{ad\_conv.slx}” をコンパイルする．
+\textbf{form\_name.html}（入力フォーム）
 
-        以上の準備の下，リンクを図~\ref{fig:adconv_run_start}~(a) の状態にして，“Start” アイコンをクリックすると，センサからの電圧が図~\ref{fig:voltage_0V}~(a) のように $0$~[V] 程度であることが確認できる．
-        
-        先に述べたように，本実験装置で用いているポテンショメータは，$1$~[V] あたり $-35$~[deg]（$= -0.6109$~[rad]）であるから，リンクを反時計回りに $45$~[deg] $= \pi/4$~[rad] 回転させると $-1.2857$~[V] の電圧が発生するはずである．
-        
-        実際，リンクを図~\ref{fig:adconv_run_start}~(b) のように反時計回りに $45$~[deg] 回転させると，センサからの電圧が図~\ref{fig:voltage_-1.2857V}~(b) のように $-1.2857$~[V] 程度であることが確認できる．
+\begin{lstlisting}[language=html]
+    <html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>検索</title>
+    </head>
+    <body>
+    <form action="regist.php" method="post">
+      番号：<br />
+      <input type="text" name="no" size="30" value="" /><br />
+      名前：<br />
+      <input type="text" name="name" size="30" value="" /><br />
+      <br />
+      <input type="submit" value="登録する" />
+    </form>
+    </body>
+    </html>
+\end{lstlisting}
 
+\textbf{regist.php}（データ登録処理）
 
+\begin{lstlisting}[language=php]
+    <html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+    <title>登録フォーム</title>
+    </head>
+    <body>
+    <?php
+    
+    $con = mysqli_connect('localhost', 'root', 'password');
+    if (!$con) {
+      exit('データベースに接続できませんでした。');
+    }
+    
+    $result = mysqli_select_db($con,'maizuru');
+    if (!$result) {
+      exit('データベースを選択できませんでした。');
+    }
+    
+    mysqli_set_charset($con,'utf8');
+    
+    $no   = $_REQUEST['no'];
+    $name = $_REQUEST['name'];
+    
+    $result = mysqli_query($con, "INSERT INTO name(no, name) VALUES('$no', '$name')");
+    if (!$result) {
+      exit('データを登録できませんでした。');
+    }
+    
+    $con = mysqli_close($con);
+    if (!$con) {
+      exit('データベースとの接続を閉じられませんでした。');
+    }
+    
+    ?>
+    <p>登録が完了しました。<br /><a href="select.php">戻る</a></p>
+    </body>
+    </html>
+\end{lstlisting}
 
-% 図3.9
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/link_0deg.pdf}
-        \caption{初期状態}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/link_45deg.pdf}
-        \caption{リンクを反時計回りに $45$~[deg] 回転させた状態}
-    \end{subfigure}
-    \caption{リンクを手で反時計回りに $45$~[deg] 回転させた状態}
-    \label{fig:adconv_run_start}
-\end{figure}
+これにより，Webフォームからデータベースへ動的に登録し，登録結果を確認する一連のWebデータベース操作が可能となった．
 
-% 図3.10
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/voltage_before.pdf}
-        \caption{初期状態}
-        \label{fig:voltage_0V}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figure/voltage_after.pdf}
-        \caption{リンクを反時計回りに $45$~[deg] 回転させた状態}
-        \label{fig:voltage_-1.2857V}
-    \end{subfigure}
-    \caption{リンクを手で反時計回りに $45$~[deg] 回転させたときの出力電圧}
-    \label{fig:output_voltage_change}
-\end{figure}
+\subsection*{実験Ⅲ：Google Maps API を活用した Web データベースの構築}
 
-\subsection{実験結果}
-\subsubsection{D/A変換とアクチュエータの動作確認}
-図~\ref{fig:response_under_constant_voltage} に示すように，DCモータに $2$~[V] の電圧を加えると，リンクが時計回りに回転し，リンクの角度 $\theta_{x}(t)$，$\theta_{y}(t)$ が弧度法の単位~[rad] で得られることが確認できた．
+本実験では，Google Maps API を活用して，データベースに登録された地理情報を地図上に可視化する Web アプリケーションを構築した．
 
-\subsubsection{A/D変換とセンサの動作確認}
-図~\ref{fig:output_voltage_change} に示すように，リンクを反時計回りに $45$~[deg] 回転させたとき，センサからの電圧が $-1.2857$~[V] 程度であることが確認できた．
+\subsubsection*{1. データベースの作成}
 
-\subsection{考察}
-アクチュエータの動作確認では，正の電圧をDCモータに加えるとリンクが時計回りに回転することが確認できた．また，センサの動作確認では，ポテンショメータが角度に比例した電圧を出力することが確認できた．これにより，2軸ロボットの動作が正確に制御可能であることが示された．
+phpMyAdmin にて，データベース \texttt{map} を新規作成し，以下の構成で \texttt{markers} テーブルを作成した．
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE `markers` ( 
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
+  `name` VARCHAR(60) NOT NULL, 
+  `address` VARCHAR(80) NOT NULL, 
+  `lat` FLOAT(10,6) NOT NULL, 
+  `lng` FLOAT(10,6) NOT NULL, 
+  `type` VARCHAR(30) NOT NULL 
+) ENGINE = MYISAM;
+\end{lstlisting}
+
+初期データとして以下のようなレコードを登録した．
+
+\begin{lstlisting}[language=SQL]
+INSERT INTO `markers` (`name`, `address`, `lat`, `lng`, `type`)
+VALUES ('Love.Fish', '580 Darling Street, Rozelle, NSW', -33.861034, 151.171936, 'restaurant');
+\end{lstlisting}
+
+\subsubsection*{2. データ出力用PHPスクリプト}
+
+登録されたデータを XML 形式で出力するため，\texttt{toxml.php} を作成した．このスクリプトは，SQL クエリにより \texttt{markers} テーブルから全レコードを取得し，Google Maps JavaScript API が読み取れる形式の XML に変換して出力する．
+
+\subsubsection*{3. Google Maps APIによる表示ページの構築}
+
+\texttt{gis01.html}，\texttt{gis02.html}，\texttt{index.html} を作成し，Google Maps 上にマーカーとしてデータを描画した．
+
+\paragraph*{gis01.html}
+基本的な地図表示を行うページであり，以下のように初期表示位置とズームレベルを設定している：
+
+\begin{lstlisting}[language=javascript]
+map = new google.maps.Map(document.getElementById('map'), {
+  center: {lat: -34.397, lng: 150.644},
+  zoom: 8
+});
+\end{lstlisting}
+
+\paragraph*{gis02.html}
+\texttt{toxml.php} から取得した XML を解析し，地図上に各マーカーを配置する．
+
+\paragraph*{index.html}
+ユーザが地図上で検索できる UI を提供する．JavaScript（\texttt{script.js}）により，検索ボックスやマーカーの追加が行われ，より直感的な操作が可能となる．
+
+\subsubsection*{4. JavaScript によるマーカー描画（script.js）}
+
+Google Maps API の \texttt{places} ライブラリと非同期通信（AJAX）を利用し，XML データを解析して地図上にマーカーを配置する処理は以下の通りである．
+
+\begin{lstlisting}[language=javascript]
+downloadUrl('toxml.php', function(data) {
+  var xml = data.responseXML;
+  var markers = xml.documentElement.getElementsByTagName('marker');
+  ...
+  var marker = new google.maps.Marker({
+    map: map,
+    position: point,
+    label: icon.label
+  });
+\end{lstlisting}
+
+マーカーをクリックすると，施設名と住所を表示する情報ウィンドウが開くように設定している．
+

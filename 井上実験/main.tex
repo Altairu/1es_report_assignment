@@ -33,8 +33,23 @@
 \usepackage{verbatim} % verbatim 環境を使うために必要
 \tcbuselibrary{skins, listingsutf8}  % ← skins を忘れずに！
 
-\usepackage{listings,jvlisting} 
-\usepackage{xcolor} 
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with, let, const},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{magenta}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{gray}\ttfamily,
+  stringstyle=\color{orange}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
 \usepackage{caption}
 %\captionsetup[lstlisting]{labelfont=bf, font=footnotesize, format=plain, singlelinecheck=false}
 
@@ -78,12 +93,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % === 年度を記入 ============================================================
-\def\year{7}	% 令和 1 年度の場合
+\def\year{7}	% 令和 7 年度の場合
 
 % === 提出年月日を記入 ============================================================
 \def\submityear{7}	% 令和 7 年
-\def\submitmonth{5}	% 5 月
-\def\submitdate{12}	% 12 日
+\def\submitmonth{6}	% 6 月
+\def\submitdate{9}	% 9 日
 
 % === 題目を記入 ============================================================
 \def\title{%
@@ -126,8 +141,8 @@
 %%%%%%　本文　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \input{part10.tex} \newpage
-%\input{part20.tex} \newpage
-%\input{part30.tex} \newpage
+\input{part20.tex} \newpage
+\input{part30.tex} \newpage
 %\input{part40.tex} \newpage
 %\input{part50.tex} \newpage
 %\input{part60.tex} \newpage
@@ -136,7 +151,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%　参考文献　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\input{bibliography.tex} \newpage
+\input{bibliography.tex} \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%　謝辞　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
