@@ -16,38 +16,38 @@ XAMPPは，Apache Webサーバ，MySQL（MariaDB），PHP，Perl などを一括
 \noindent 手順は以下の通りである．
 
 \begin{enumerate}
-  \item 以下の公式サイトより，XAMPPのLinux版インストーラをダウンロードする．  
+  \item 以下の公式サイトより，XAMPPのLinux版インストーラをダウンロードする．
         \url{https://www.apachefriends.org/jp/index.html}
 
   \item ターミナルでダウンロードディレクトリに移動する．
-\begin{lstlisting}[language=bash]
+        \begin{lstlisting}[language=bash]
 cd ~/Downloads/
 \end{lstlisting}
 
   \item インストーラに実行権限を与える．
-\begin{lstlisting}[language=bash]
+        \begin{lstlisting}[language=bash]
 sudo chmod 755 xampp-linux-x64-8.0.10-0-installer.run
 \end{lstlisting}
 
   \item インストーラを実行する．
-\begin{lstlisting}[language=bash]
+        \begin{lstlisting}[language=bash]
 sudo ./xampp-linux-x64-8.0.10-0-installer.run
 \end{lstlisting}
 
-\item GUIベースのマネージャを起動する．
-\begin{lstlisting}[language=bash]
+  \item GUIベースのマネージャを起動する．
+        \begin{lstlisting}[language=bash]
 sudo /opt/lampp/manager-linux-x64.run
 \end{lstlisting}
 
   \item LAMP環境を起動する．
-\begin{lstlisting}[language=bash]
+        \begin{lstlisting}[language=bash]
 sudo /opt/lampp/lampp start
 \end{lstlisting}
 
   \item ブラウザで \texttt{http://localhost/} を開き，「XAMPPへようこそ」と表示されればApacheの動作確認は完了である．
 
   \item 確認後，LAMP環境を停止する．
-\begin{lstlisting}[language=bash]
+        \begin{lstlisting}[language=bash]
 sudo /opt/lampp/lampp stop
 \end{lstlisting}
 
@@ -55,6 +55,12 @@ sudo /opt/lampp/lampp stop
 \end{enumerate}
 
 この操作により，Webサーバの動作環境が整い，今後のWebデータベース構築に必要な基盤が準備された．
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/1.pdf}
+  \caption{Welcome to XAMPP}
+\end{figure}
 
 \subsection*{実験Ⅱ：Webページ作成とデータベース構築}
 
