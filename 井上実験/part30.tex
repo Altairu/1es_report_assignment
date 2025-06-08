@@ -102,6 +102,12 @@ cd /opt/lampp/htdocs/
 </style>
 \end{lstlisting}
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/2.pdf}
+  \caption{sample.html}
+\end{figure}
+
 \subsubsection*{2. データベースの作成・検索}
 
 \texttt{phpMyAdmin}を用いて，データベース \texttt{maizuru} を作成し，以下の2つのテーブルを構築した．
@@ -117,6 +123,18 @@ cd /opt/lampp/htdocs/
 \begin{lstlisting}[language=SQL]
 SELECT * FROM name;
 \end{lstlisting}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/3.pdf}
+  \caption{\texttt{maizuru} のnameテーブル}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/4.pdf}
+  \caption{\texttt{maizuru} のbirthplaceテーブル}
+\end{figure}
 
 さらに，2つのテーブルを結合して，対応する生誕地を表示するクエリを実行した．
 
@@ -183,6 +201,12 @@ sudo /opt/lampp/lampp start
     </html>
 \end{lstlisting}
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/6.pdf}
+  \caption{connect.php}
+\end{figure}
+
 \textbf{select.php}
 \begin{lstlisting}[language=php]
     <html>
@@ -232,6 +256,11 @@ sudo /opt/lampp/lampp start
     </body>
     </html>
 \end{lstlisting}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/7.pdf}
+  \caption{select.php}
+\end{figure}
 
 \textbf{select2.php}
 \begin{lstlisting}[language=php]
@@ -283,69 +312,45 @@ sudo /opt/lampp/lampp start
     </body>
     </html>
 \end{lstlisting}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/8.pdf}
+  \caption{select2.php}
+\end{figure}
 
 \textbf{form\_name.html}（入力フォーム）
 
 \begin{lstlisting}[language=html]
-    <html>
-    <head>
+  <html>
+
+  <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>検索</title>
-    </head>
-    <body>
+  </head>
+  
+  <body>
     <form action="regist.php" method="post">
       番号：<br />
       <input type="text" name="no" size="30" value="" /><br />
       名前：<br />
       <input type="text" name="name" size="30" value="" /><br />
+      出身地：<br />
+      <input type="text" name="birthplace" size="30" value="" /><br />
+      生年：<br />
+      <input type="text" name="year_of_birth" size="30" value="" /><br />
       <br />
       <input type="submit" value="登録する" />
     </form>
-    </body>
-    </html>
+  </body>
+  
+  </html>
 \end{lstlisting}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/9.pdf}
+  \caption{form\_name.html}
+\end{figure}
 
-\textbf{regist.php}（データ登録処理）
-
-\begin{lstlisting}[language=php]
-    <html>
-    <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
-    <title>登録フォーム</title>
-    </head>
-    <body>
-    <?php
-    
-    $con = mysqli_connect('localhost', 'root', 'password');
-    if (!$con) {
-      exit('データベースに接続できませんでした。');
-    }
-    
-    $result = mysqli_select_db($con,'maizuru');
-    if (!$result) {
-      exit('データベースを選択できませんでした。');
-    }
-    
-    mysqli_set_charset($con,'utf8');
-    
-    $no   = $_REQUEST['no'];
-    $name = $_REQUEST['name'];
-    
-    $result = mysqli_query($con, "INSERT INTO name(no, name) VALUES('$no', '$name')");
-    if (!$result) {
-      exit('データを登録できませんでした。');
-    }
-    
-    $con = mysqli_close($con);
-    if (!$con) {
-      exit('データベースとの接続を閉じられませんでした。');
-    }
-    
-    ?>
-    <p>登録が完了しました。<br /><a href="select.php">戻る</a></p>
-    </body>
-    </html>
-\end{lstlisting}
 
 これにより，Webフォームからデータベースへ動的に登録し，登録結果を確認する一連のWebデータベース操作が可能となった．
 
