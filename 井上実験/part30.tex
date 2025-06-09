@@ -384,6 +384,12 @@ VALUES ('Love.Fish', '580 Darling Street, Rozelle, NSW', -33.861034, 151.171936,
 
 登録されたデータを XML 形式で出力するため，\texttt{toxml.php} を作成した．このスクリプトは，SQL クエリにより \texttt{markers} テーブルから全レコードを取得し，Google Maps JavaScript API が読み取れる形式の XML に変換して出力する．
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/11.pdf}
+  \caption{toxml.php}
+\end{figure}
+
 \subsubsection*{3. Google Maps APIによる表示ページの構築}
 
 \texttt{gis01.html}，\texttt{gis02.html}，\texttt{index.html} を作成し，Google Maps 上にマーカーとしてデータを描画した．
@@ -420,5 +426,8 @@ downloadUrl('toxml.php', function(data) {
   });
 \end{lstlisting}
 
-マーカーをクリックすると，施設名と住所を表示する情報ウィンドウが開くように設定している．
-
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figure/10.pdf}
+  \caption{gis02.html}
+\end{figure}
