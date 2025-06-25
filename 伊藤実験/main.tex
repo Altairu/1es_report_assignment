@@ -1,0 +1,166 @@
+\documentclass[11pt]{ujarticle}
+%\documentclass{jlreq,11pt}
+%%%%%%% スタイルファイル %%%%%%%%%%%%%%%%%%%%%%
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+
+\usepackage{thesis}
+
+\usepackage[dvipdfmx]{graphicx}   % pdf 形式の図版取り込みのため　, draftは消す
+\usepackage{ascmac}
+\usepackage{multicol}
+\usepackage{array}
+\usepackage{float}
+\usepackage{indent}
+\setlength{\parindent}{1em} % 段落の字下げを2文字分にする
+
+\usepackage{url}
+
+\usepackage{color}
+\definecolor{lightgray}{gray}{0.9}
+\definecolor{darkgray}{gray}{0.25}
+
+\usepackage{framed}
+\makeatletter
+\renewenvironment{leftbar}{%
+  \def\FrameCommand{\hspace{1.5zw}\textcolor{darkgray}{\vrule width 2pt}\hspace{0.5zw}}% 
+  \MakeFramed {\advance\hsize-\width \FrameRestore}}%
+ {\endMakeFramed}
+\makeatother
+\usepackage{subcaption}
+
+\usepackage{tcolorbox}
+\usepackage{verbatim} % verbatim 環境を使うために必要
+\tcbuselibrary{skins, listingsutf8}  % ← skins を忘れずに！
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with, let, const},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{magenta}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{gray}\ttfamily,
+  stringstyle=\color{orange}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+\usepackage{caption}
+%\captionsetup[lstlisting]{labelfont=bf, font=footnotesize, format=plain, singlelinecheck=false}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}  % 既存のヘッダー・フッターを消す
+\fancyfoot[C]{\thepage}  % 中央下部にページ番号を出す
+\renewcommand{\headrulewidth}{0pt}  % ヘッダー罫線を消す
+
+
+\renewcommand{\lstlistingname}{Code}
+
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    columns=fullflexible,    % ← extendedchars の代わり
+    numbers=left,
+    stepnumber=1,
+    numbersep=10pt,
+    frame=tb,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    showspaces=false,
+    showstringspaces=false,
+    language=Python,
+    tabsize=4,
+    extendedchars=true,      
+    inputencoding=utf8,       
+    backgroundcolor={\color[gray]{.95}},
+}
+
+
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　表紙　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% === 年度を記入 ============================================================
+\def\year{7}	% 令和 7 年度の場合
+
+% === 提出年月日を記入 ============================================================
+\def\submityear{7}	% 令和 7 年
+\def\submitmonth{6}	% 6 月
+\def\submitdate{30}	% 30 日
+
+% === 題目を記入 ============================================================
+\def\title{%
+進化計算アルゴリズム
+}%
+
+% === 題目を記入（背表紙用） ============================================================
+\def\spine{%
+進化計算アルゴリズム
+}%
+
+% === 学科を記入 ==========================================================
+\def\course{電気電子システム工学コース}
+
+% === 学籍番号を記入 ========================================================
+\def\student_number{a0527}
+
+% === 氏名を記入 ============================================================
+\def\name{野口 史遠}
+
+
+% === 表紙 ========================================================
+\thispagestyle{empty}
+\input{cover.tex} \newpage
+
+% === 論文要旨 ========================================================
+\thispagestyle{empty}
+%\input{abstract.tex} \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　目次　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagenumbering{roman}
+\tableofcontents         %% 目次 
+\newpage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　本文　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{part10.tex} \newpage
+\input{part20.tex} \newpage
+%\input{part30.tex} \newpage
+%\input{part40.tex} \newpage
+%\input{part50.tex} \newpage
+%\input{part60.tex} \newpage
+%\input{part70.tex} \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　参考文献　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{bibliography.tex} \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　謝辞　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{acknowledgment.tex} \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%　付録　%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{appendix.tex}
+
+\end{document}
